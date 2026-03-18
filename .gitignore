@@ -1,1 +1,4 @@
 /.lake
+.env
+aristotle-docs.md
+CLAUDE.md
