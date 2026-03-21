@@ -4,10 +4,13 @@
 Usage:
     python scripts/submit.py my_theorems/Paper.md "Fill in the sorries"
     python scripts/submit.py my_theorems/Paper.md "Fill in the sorries" --project-dir .
+    python scripts/submit.py my_theorems/Paper.md "Fill in the sorries" --dry-run
 
 The paper path is required as the first argument — it links this submission to its
 source so that  python scripts/retrieve.py  can find and annotate the right file
 when the job completes.
+
+--dry-run  List files that would be packaged and exit without submitting.
 
 Exits immediately after submitting. Aristotle will email when done.
 """
@@ -71,6 +74,10 @@ async def main() -> None:
         print(f"Paper not found: {paper}")
         sys.exit(1)
 
+    dry_run = "--dry-run" in args
+    if dry_run:
+        args = [a for a in args if a != "--dry-run"]
+
     project_dir = pathlib.Path(".")
     if "--project-dir" in args:
         idx = args.index("--project-dir")
@@ -85,6 +92,21 @@ async def main() -> None:
 
     print(f"Packaging {project_dir} …")
     tar_bytes = build_filtered_tar(project_dir)
+
+    if dry_run:
+        import io as _io
+        buf = _io.BytesIO(tar_bytes)
+        with tarfile.open(fileobj=buf, mode="r:gz") as tf:
+            members = sorted(tf.getmembers(), key=lambda m: m.name)
+            print(f"\n{'Size':>10}  File")
+            print(f"{'─'*10}  {'─'*40}")
+            for m in members:
+                print(f"{m.size:>10,}  {m.name}")
+        print(f"\n{'─'*10}")
+        print(f"{len(tar_bytes):>10,}  total compressed ({len(tar_bytes)/1024:.1f} KB)")
+        print(f"\nDry run — nothing submitted.")
+        return
+
     print(f"Archive: {len(tar_bytes) / 1024:.1f} KB")
 
     tmp_tar = project_dir / ".lean_submission.tar.gz"
