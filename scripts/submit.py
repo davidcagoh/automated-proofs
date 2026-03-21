@@ -28,7 +28,7 @@ import pathspec
 from aristotlelib import Project, AristotleAPIError
 from aristotlelib.local_file_utils import should_skip_input_file, get_pruned_dirnames
 
-EXTRA_EXCLUDE_DIRS = {".claude", ".github", "results", "scripts", "my_theorems"}
+EXTRA_EXCLUDE_DIRS = {".claude", ".github", "results", "scripts", "my_theorems", "proofs-from-literature", "memory", "reports"}
 
 
 def build_filtered_tar(project_dir: pathlib.Path) -> bytes:
