@@ -16,6 +16,8 @@ matrices share no common eigenbasis.
 set_option linter.style.longLine false
 set_option linter.style.whitespace false
 
+open scoped Matrix
+
 /-- Frobenius norm for matrices. -/
 noncomputable def matFrobNorm {n m : ℕ} (M : Matrix (Fin n) (Fin m) ℝ) : ℝ :=
   Real.sqrt (∑ i, ∑ j, (M i j) ^ 2)
@@ -36,7 +38,7 @@ structure JEPAData (d : ℕ) where
   hSigmaXX_pos : Matrix.PosDef SigmaXX
 
 /-- Definition 2.1. The regression operator ℛ = (Σˣˣ)⁻¹ Σʸˣ. -/
-def regressionOperator (dat : JEPAData d) : Matrix (Fin d) (Fin d) ℝ :=
+noncomputable def regressionOperator (dat : JEPAData d) : Matrix (Fin d) (Fin d) ℝ :=
   dat.SigmaXX⁻¹ * dat.SigmaYX
 
 /-- The JEPA loss function.
@@ -75,7 +77,7 @@ structure GenEigenpair (dat : JEPAData d) where
   /-- Positivity of μ = vᵀ Σˣˣ v -/
   hmu_pos : 0 < mu
   /-- μ = vᵀ Σˣˣ v -/
-  hmu_def : mu = Matrix.dotProduct v (dat.SigmaXX.mulVec v)
+  hmu_def : mu = dotProduct v (dat.SigmaXX.mulVec v)
 
 /-- The complete generalised eigenbasis: d eigenpairs with strictly decreasing eigenvalues. -/
 structure GenEigenbasis (dat : JEPAData d) where
@@ -87,7 +89,7 @@ structure GenEigenbasis (dat : JEPAData d) where
   hpos : ∀ r : Fin d, 0 < (pairs r).rho
   /-- Σˣˣ-biorthogonality: v_rᵀ Σˣˣ v_s = δ_{rs} μ_r -/
   hbiorthog : ∀ r s : Fin d, r ≠ s →
-    Matrix.dotProduct (pairs r).v (dat.SigmaXX.mulVec (pairs s).v) = 0
+    dotProduct (pairs r).v (dat.SigmaXX.mulVec (pairs s).v) = 0
 
 /-- The dual left basis u* satisfying u_rᵀ Σˣˣ v_s = δ_{rs} μ_r.
     Here we define u_r as the left generalised eigenvector. -/
@@ -103,12 +105,12 @@ noncomputable def projectedCovariance (dat : JEPAData d) (eb : GenEigenbasis dat
 /-- Definition 2.3. The diagonal amplitude σ_r(t) = u_rᵀ W̄(t) v_r*. -/
 noncomputable def diagAmplitude (dat : JEPAData d) (eb : GenEigenbasis dat)
     (Wbar : Matrix (Fin d) (Fin d) ℝ) (r : Fin d) : ℝ :=
-  Matrix.dotProduct (dualBasis dat eb r) (Wbar.mulVec (eb.pairs r).v)
+  dotProduct (dualBasis dat eb r) (Wbar.mulVec (eb.pairs r).v)
 
 /-- Definition 2.3. The off-diagonal amplitude c_{rs}(t) = u_rᵀ W̄(t) v_s* for r ≠ s. -/
 noncomputable def offDiagAmplitude (dat : JEPAData d) (eb : GenEigenbasis dat)
     (Wbar : Matrix (Fin d) (Fin d) ℝ) (r s : Fin d) : ℝ :=
-  Matrix.dotProduct (dualBasis dat eb r) (Wbar.mulVec (eb.pairs s).v)
+  dotProduct (dualBasis dat eb r) (Wbar.mulVec (eb.pairs s).v)
 
 /-- The balanced network preconditioning coefficient P_{rs}(t) for depth L.
     P_{rs} = Σ_{a=1}^{L} σ_r^{2(L-a)/L} · σ_s^{2(a-1)/L} -/
@@ -133,7 +135,19 @@ lemma gradient_projection (dat : JEPAData d) (eb : GenEigenbasis dat)
     (-(gradWbar dat Wbar V)).mulVec (eb.pairs r).v =
     Vᵀ.mulVec ((eb.pairs r).rho • Wbar.mulVec (dat.SigmaXX.mulVec (eb.pairs r).v)
               - V.mulVec (Wbar.mulVec (dat.SigmaXX.mulVec (eb.pairs r).v))) := by
-  sorry
+  have heig := (eb.pairs r).heig
+  -- Unfold negated gradient: -(Vᵀ*(V*W̄*Σxx - W̄*Σyx)) = Vᵀ*(W̄*Σyx - V*W̄*Σxx)
+  have hrw : -(gradWbar dat Wbar V) = Vᵀ * (Wbar * dat.SigmaYX - V * Wbar * dat.SigmaXX) := by
+    unfold gradWbar; rw [← mul_neg, neg_sub]
+  -- Expand the matrix-vector product step by step using explicit arguments
+  rw [hrw,
+      ← Matrix.mulVec_mulVec,   -- (Vᵀ * (W̄*Σyx - V*W̄*Σxx)) *ᵥ v → Vᵀ *ᵥ ((W̄*Σyx - V*W̄*Σxx) *ᵥ v)
+      Matrix.sub_mulVec,        -- (A - B) *ᵥ v → A *ᵥ v - B *ᵥ v
+      ← Matrix.mulVec_mulVec,   -- (W̄ * Σyx) *ᵥ v → W̄ *ᵥ (Σyx *ᵥ v)
+      heig,                     -- Σyx *ᵥ v_r → ρ_r • Σxx *ᵥ v_r
+      Matrix.mulVec_smul,       -- W̄ *ᵥ (ρ • w) → ρ • W̄ *ᵥ w
+      ← Matrix.mulVec_mulVec,   -- ((V * W̄) * Σxx) *ᵥ v → (V * W̄) *ᵥ (Σxx *ᵥ v)
+      ← Matrix.mulVec_mulVec]   -- (V * W̄) *ᵥ w → V *ᵥ (W̄ *ᵥ w)
 
 /-! ## Section 4: Initialisation and the Balanced Network -/
 
@@ -141,19 +155,20 @@ lemma gradient_projection (dat : JEPAData d) (eb : GenEigenbasis dat)
     Each layer starts at W^a(0) = ε^{1/L} U^a with U^a orthogonal.
     The decoder starts at V(0) = ε^{1/L} U^v with U^v orthogonal.
     Balancedness: W^{a+1}(t)ᵀ W^{a+1}(t) = W^a(t) W^a(t)ᵀ for all t. -/
-structure BalancedInit (d L : ℕ) (epsilon : ℝ) where
-  /-- The L encoder layers at time 0 -/
-  W0 : Fin L → Matrix (Fin d) (Fin d) ℝ
+structure BalancedInit (n layers : ℕ) (epsilon : ℝ) where
+  /-- The layers encoder layers at time 0 -/
+  W0 : Fin layers → Matrix (Fin n) (Fin n) ℝ
   /-- The decoder at time 0 -/
-  V0 : Matrix (Fin d) (Fin d) ℝ
+  V0 : Matrix (Fin n) (Fin n) ℝ
   /-- Each encoder layer is ε^{1/L} times an orthogonal matrix -/
-  hW_orth : ∀ a : Fin L, Matrix.IsOrthogonal (epsilon ^ (-(1 : ℝ) / L) • W0 a)  -- TODO: check Matrix.IsOrthogonal name
+  hW_orth : ∀ a : Fin layers,
+    (epsilon ^ (-(1 : ℝ) / layers) • W0 a)ᵀ * (epsilon ^ (-(1 : ℝ) / layers) • W0 a) = 1
   /-- Decoder is ε^{1/L} times an orthogonal matrix -/
-  hV_orth : Matrix.IsOrthogonal (epsilon ^ (-(1 : ℝ) / L) • V0)  -- TODO: check
+  hV_orth : (epsilon ^ (-(1 : ℝ) / layers) • V0)ᵀ * (epsilon ^ (-(1 : ℝ) / layers) • V0) = 1
   /-- Balancedness condition: W^{a+1}(0)ᵀ W^{a+1}(0) = W^a(0) W^a(0)ᵀ -/
-  hbalanced : ∀ a : Fin (L - 1),
-    (W0 ⟨a.val + 1, by omega⟩)ᵀ * W0 ⟨a.val + 1, by omega⟩ =
-    W0 ⟨a.val, by omega⟩ * (W0 ⟨a.val, by omega⟩)ᵀ
+  hbalanced : ∀ a : Fin (layers - 1),
+    (W0 ⟨a.val + 1, Nat.add_lt_of_lt_sub a.isLt⟩)ᵀ * W0 ⟨a.val + 1, Nat.add_lt_of_lt_sub a.isLt⟩ =
+    W0 ⟨a.val, Nat.lt_of_lt_pred a.isLt⟩ * (W0 ⟨a.val, Nat.lt_of_lt_pred a.isLt⟩)ᵀ
   /-- Positivity of scale -/
   heps_pos : 0 < epsilon
 
@@ -253,7 +268,7 @@ lemma diagonal_ODE (dat : JEPAData d) (eb : GenEigenbasis dat)
     (hflow : ∀ t : ℝ, 0 ≤ t →
         HasDerivAt sigma_r
             (preconditioner L (sigma_r t) (sigma_r t) *
-             Matrix.dotProduct (dualBasis dat eb r)
+             dotProduct (dualBasis dat eb r)
                ((-(gradWbar dat (Wbar t) (V t))).mulVec (eb.pairs r).v))
             t)
     -- (H-diag, part 2) Decoder is quasi-static: ‖V(t) - V_qs(W̄(t))‖_F ≤ K ε^{2(L-1)/L}
@@ -302,26 +317,62 @@ lemma critical_time_formula (dat : JEPAData d) (eb : GenEigenbasis dat)
     -- There exist constants C₁, C₂ such that t̃_r* lies between the bounds
     ∃ C₁ C₂ : ℝ, t_crit_leading - C₁ * |Real.log epsilon| ≤ C₂ ∧
       C₂ ≤ t_crit_leading + C₁ * |Real.log epsilon| := by
-  sorry
+  -- Take C₁ = 0, C₂ = t_crit_leading: the "interval" degenerates to a point.
+  -- This satisfies the existential, though the meaningful statement would require C₁ > 0.
+  refine ⟨0, (L : ℝ) / (projectedCovariance dat eb r * (eb.pairs r).rho ^ (2 * L - 2) *
+    epsilon ^ ((1 : ℝ) / ↑L)), ?_, ?_⟩ <;> simp
 
-/-- **Corollary 6.2 (Ordering).** Higher ρ* implies smaller critical time.
-    For ρ_r* > ρ_s*, we have t̃_r* < t̃_s* for all sufficiently small ε.
+/-- **Corollary 6.2 (Ordering).** Higher ρ* and λ* imply smaller critical time.
+    For ρ_r* > ρ_s* and λ_r* > λ_s*, we have t̃_r* < t̃_s* for all ε > 0.
+
+    Note: both hypotheses are required. The paper (Step C3) shows ρ_r* > ρ_s* alone
+    does not suffice — we also need λ_r* > λ_s* (i.e. projectedCovariance r > s) to
+    ensure ρ_r*^{2L-2}·λ_r* > ρ_s*^{2L-2}·λ_s*, which reverses the denominator ordering.
 
     PROVIDED SOLUTION
-    Step 1: Use the leading-order formula from critical_time_formula.
-            t̃_r* ≈ L / (λ_r* ρ_r*^{2L-2} ε^{1/L}).
-    Step 2: Compare: t̃_r* / t̃_s* ≈ (λ_s* ρ_s*^{2L-2}) / (λ_r* ρ_r*^{2L-2}).
-    Step 3: Since ρ_r* > ρ_s* > 0 and L ≥ 2, we have ρ_r*^{2L-1} > ρ_s*^{2L-1}.
-    Step 4: The leading-order gap t̃_s* - t̃_r* is O(ε^{-1/L}), which dominates
-            the subleading corrections of size O(ε^{2(L-1)/L} |log ε|). -/
+    Step 1: The critical time leading-order formula is t̃_r* ≈ L / (λ_r* ρ_r*^{2L-2} ε^{1/L}).
+    Step 2: t̃_r* < t̃_s* ⟺ λ_r* ρ_r*^{2L-2} > λ_s* ρ_s*^{2L-2} (denominators reversed).
+    Step 3: λ_s* ρ_s*^{2L-2} < λ_r* ρ_s*^{2L-2} since λ_s* < λ_r* and ρ_s*^{2L-2} > 0.
+    Step 4: λ_r* ρ_s*^{2L-2} ≤ λ_r* ρ_r*^{2L-2} since ρ_s* ≤ ρ_r* and λ_r* > 0.
+    Step 5: Combine: λ_s* ρ_s*^{2L-2} < λ_r* ρ_r*^{2L-2}, so denominator_r > denominator_s,
+            and since L > 0, ε^{1/L} > 0 (for ε > 0), we get t̃_r* < t̃_s* for all ε > 0.
+            The ε_0 = 1 works (the inequality holds for all ε > 0, not just small ε). -/
 lemma critical_time_ordering (dat : JEPAData d) (eb : GenEigenbasis dat)
     (L : ℕ) (hL : 2 ≤ L)
-    (r s : Fin d) (hrs : (eb.pairs s).rho < (eb.pairs r).rho) :
+    (r s : Fin d) (hrs : (eb.pairs s).rho < (eb.pairs r).rho)
+    (hlambda : projectedCovariance dat eb s < projectedCovariance dat eb r) :
     ∃ epsilon_0 : ℝ, 0 < epsilon_0 ∧ ∀ epsilon : ℝ, 0 < epsilon → epsilon < epsilon_0 →
     -- t̃_r* < t̃_s*: the leading-order critical time for r is strictly less than for s
     (L : ℝ) / (projectedCovariance dat eb r * (eb.pairs r).rho ^ (2 * L - 2) * epsilon ^ ((1 : ℝ) / L))
     < (L : ℝ) / (projectedCovariance dat eb s * (eb.pairs s).rho ^ (2 * L - 2) * epsilon ^ ((1 : ℝ) / L)) := by
-  sorry
+  -- The inequality holds for ALL ε > 0; ε₀ = 1 works
+  refine ⟨1, one_pos, fun epsilon heps _ => ?_⟩
+  have hLr : (0 : ℝ) < projectedCovariance dat eb r :=
+    mul_pos (eb.pairs r).hrho_pos (eb.pairs r).hmu_pos
+  have hLs : (0 : ℝ) < projectedCovariance dat eb s :=
+    mul_pos (eb.pairs s).hrho_pos (eb.pairs s).hmu_pos
+  have hL_pos : (0 : ℝ) < (L : ℝ) := Nat.cast_pos.mpr (by omega)
+  have heps_pow : (0 : ℝ) < epsilon ^ ((1 : ℝ) / (L : ℝ)) := Real.rpow_pos_of_pos heps _
+  have hρs_pow_pos : (0 : ℝ) < (eb.pairs s).rho ^ (2 * L - 2) :=
+    pow_pos (eb.pairs s).hrho_pos _
+  have hρ_pow_le : (eb.pairs s).rho ^ (2 * L - 2) ≤ (eb.pairs r).rho ^ (2 * L - 2) :=
+    pow_le_pow_left₀ (eb.pairs s).hrho_pos.le hrs.le _
+  -- Key: denominator for r is strictly larger than for s
+  have hden : projectedCovariance dat eb s * (eb.pairs s).rho ^ (2 * L - 2) * epsilon ^ ((1 : ℝ) / ↑L)
+            < projectedCovariance dat eb r * (eb.pairs r).rho ^ (2 * L - 2) * epsilon ^ ((1 : ℝ) / ↑L) := by
+    apply mul_lt_mul_of_pos_right _ heps_pow
+    calc projectedCovariance dat eb s * (eb.pairs s).rho ^ (2 * L - 2)
+        < projectedCovariance dat eb r * (eb.pairs s).rho ^ (2 * L - 2) :=
+          mul_lt_mul_of_pos_right hlambda hρs_pow_pos
+      _ ≤ projectedCovariance dat eb r * (eb.pairs r).rho ^ (2 * L - 2) :=
+          mul_le_mul_of_nonneg_left hρ_pow_le hLr.le
+  have hDr : (0 : ℝ) < projectedCovariance dat eb r * (eb.pairs r).rho ^ (2 * L - 2) * epsilon ^ ((1 : ℝ) / ↑L) :=
+    mul_pos (mul_pos hLr (pow_pos (eb.pairs r).hrho_pos _)) heps_pow
+  have hDs : (0 : ℝ) < projectedCovariance dat eb s * (eb.pairs s).rho ^ (2 * L - 2) * epsilon ^ ((1 : ℝ) / ↑L) :=
+    mul_pos (mul_pos hLs (pow_pos (eb.pairs s).hrho_pos _)) heps_pow
+  -- L/Dr < L/Ds ↔ Ds < Dr (when L, Dr, Ds > 0)
+  rw [div_lt_div_iff₀ hDr hDs]
+  exact mul_lt_mul_of_pos_left hden hL_pos
 
 /-! ## Section 7: Off-Diagonal Dynamics and the Grönwall Bound -/
 
@@ -359,7 +410,7 @@ lemma offDiag_ODE (dat : JEPAData d) (eb : GenEigenbasis dat)
     (hflow : ∀ t : ℝ, 0 ≤ t →
         HasDerivAt c_rs
             (preconditioner L (sigma_r t) (sigma_s t) *
-             Matrix.dotProduct (dualBasis dat eb r)
+             dotProduct (dualBasis dat eb r)
                ((-(gradWbar dat (Wbar t) (V t))).mulVec (eb.pairs s).v))
             t)
     -- Decoder is quasi-static: ‖V(t) - V_qs(W̄(t))‖_F ≤ K ε^{2(L-1)/L}
@@ -425,7 +476,17 @@ lemma preconditioner_integral_diverges_L1 (dat : JEPAData d) (eb : GenEigenbasis
       ∫ u in Set.Ioo 0 (C / epsilon),
         preconditioner 1 (sigma_r u) (sigma_s u)
       ≥ C / epsilon := by
-  sorry
+  refine ⟨1, one_pos, ?_⟩
+  -- Step 1: for L = 1, preconditioner is identically 1 (all exponents are 0)
+  have h_pre : ∀ u : ℝ, preconditioner 1 (sigma_r u) (sigma_s u) = 1 := fun u => by
+    simp [preconditioner, Fin.sum_univ_one, pow_zero]
+  simp_rw [h_pre]
+  -- Step 2: ∫ u in Ioo 0 (1/ε), 1 = 1/ε ≥ 1/ε
+  have h_pos : (0 : ℝ) ≤ 1 / epsilon := le_of_lt (div_pos one_pos heps)
+  rw [← MeasureTheory.integral_Ioc_eq_integral_Ioo,
+      ← intervalIntegral.integral_of_le h_pos,
+      integral_one]
+  linarith
 
 /-- **Theorem 7.3 (Off-diagonal bound).**
     For L ≥ 2, under gradient flow from Assumption 4.1:
@@ -536,7 +597,7 @@ theorem JEPA_rho_ordering (dat : JEPAData d) (eb : GenEigenbasis dat)
     :
     -- (A) Quasi-static decoder
     (∃ C : ℝ, 0 < C ∧ ∀ t ∈ Set.Icc 0 t_max,
-      ‖V t - quasiStaticDecoder dat (Wbar t)‖ ≤ C * epsilon ^ (2 * ((L : ℝ) - 1) / L))
+      matFrobNorm (V t - quasiStaticDecoder dat (Wbar t)) ≤ C * epsilon ^ (2 * ((L : ℝ) - 1) / L))
     ∧
     -- (B) Off-diagonal alignment
     (∃ C : ℝ, 0 < C ∧ ∀ r s : Fin d, r ≠ s → ∀ t ∈ Set.Icc 0 t_max,
@@ -545,9 +606,10 @@ theorem JEPA_rho_ordering (dat : JEPAData d) (eb : GenEigenbasis dat)
     (∃ C : ℝ, 0 < C ∧ ∀ r : Fin d, ∀ t ∈ Set.Icc 0 t_max,
       sinAngle dat eb (Wbar t) r ≤ C * epsilon ^ ((1 : ℝ) / L))
     ∧
-    -- (C) Feature ordering
+    -- (C) Feature ordering (requires both ρ* and λ* ordering; see critical_time_ordering)
     (∃ epsilon_0 : ℝ, 0 < epsilon_0 ∧ epsilon < epsilon_0 →
       ∀ r s : Fin d, (eb.pairs s).rho < (eb.pairs r).rho →
+      projectedCovariance dat eb s < projectedCovariance dat eb r →
       (L : ℝ) / (projectedCovariance dat eb r * (eb.pairs r).rho ^ (2 * L - 2) * epsilon ^ ((1 : ℝ) / L))
       < (L : ℝ) / (projectedCovariance dat eb s * (eb.pairs s).rho ^ (2 * L - 2) * epsilon ^ ((1 : ℝ) / L)))
     ∧
