@@ -1,0 +1,5 @@
+{
+  "paper": "my_theorems/JEPA_Proof_Lecture_v3.md",
+  "prompt": "Fill in the sorries in AutomatedProofs/JEPA.lean. Focus ONLY on these three lemmas: quasiStatic_approx (line ~234), offDiag_bound (line ~527), JEPA_rho_ordering (line ~627). quasiStatic_approx requires a two-phase ODE argument: Phase A uses exponential convergence of the decoder on timescale O(eps^{-2/L}); Phase B uses a Gronwall contraction-drift bound. offDiag_bound applies gronwall_approx_ode_bound from Lemmas.lean \u2014 you will need to establish ContinuousOn and HasDerivAt for c_rs from the hypotheses. JEPA_rho_ordering assembles all the ODE lemmas. The helper lemmas in AutomatedProofs/Lemmas.lean are already proved. Leave diagonal_ODE, offDiag_ODE, preconditioner_integral_bounded untouched.",
+  "submitted_at": "2026-03-23T00:15:16.597622+00:00"
+}

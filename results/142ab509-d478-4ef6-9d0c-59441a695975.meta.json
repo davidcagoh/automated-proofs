@@ -1,0 +1,5 @@
+{
+  "paper": "my_theorems/JEPA_Proof_Lecture_v3.md",
+  "prompt": "Fill in all the sorries in AutomatedProofs/JEPA.lean. The lemmas in AutomatedProofs/Lemmas.lean are fully proved and available as dependencies. Focus on: critical_time_ordering, JEPA_rho_ordering, and the ODE lemmas (quasiStatic_approx, diagonal_ODE, offDiag_ODE, offDiag_bound, preconditioner_integral_diverges_L1, critical_time_formula).",
+  "submitted_at": "2026-03-22T18:24:25.828054+00:00"
+}

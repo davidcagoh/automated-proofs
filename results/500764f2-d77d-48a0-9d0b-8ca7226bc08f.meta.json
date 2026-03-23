@@ -1,0 +1,5 @@
+{
+  "paper": "my_theorems/JEPA_Proof_Lecture_v3.md",
+  "prompt": "Fill in all the sorries in AutomatedProofs/JEPA.lean. The lemmas in AutomatedProofs/Lemmas.lean (gronwall_approx_ode_bound, frobenius_pd_lower_bound, pd_quadratic_lower_bound) are fully proved and available. The 6 remaining sorries are all ODE/integral analysis: quasiStatic_approx (two-phase ODE argument), diagonal_ODE (nonlinear scalar ODE approximation), offDiag_ODE (off-diagonal ODE with quasi-static substitution), preconditioner_integral_bounded (integral bound via change-of-variables from the diagonal ODE), offDiag_bound (apply gronwall_approx_ode_bound with alpha = preconditioner * kappa), and JEPA_rho_ordering (main theorem assembling all parts). The algebraic lemmas gradient_projection, critical_time_formula, critical_time_ordering, and preconditioner_integral_diverges_L1 are already proved.",
+  "submitted_at": "2026-03-22T20:44:29.139777+00:00"
+}

@@ -1,4 +1,4 @@
-> *Annotated from `6c17ec4f-9252-4960-9a44-040c615e8598.tar.gz` — 2026-03-21 04:15 UTC. Key: ✓ proved · ◑ vacuous · ⚠️ needs revision.*
+> *Annotated from `6c17ec4f-9252-4960-9a44-040c615e8598.tar.gz` — 2026-03-23 00:31 UTC. Key: ✓ proved · ◑ vacuous · ⚠️ needs revision.*
 
 ---
 output:
@@ -110,9 +110,6 @@ assumption on the data beyond $\Sigma^{xx} \succ 0$.
 
 $$(-\nabla_{\bar{W}}\mathcal{L})\,\mathbf{v}_r^*
   = V^\top(\rho_r^* I - V)\,\bar{W}\Sigma^{xx}\mathbf{v}_r^*.$$
-
-
-> ✓ **Proved** (`gradient_projection`). Proved by unfolding `gradWbar`, distributing `mulVec`, and substituting the generalised eigenvalue equation `heig`.
 
 **Proof.** By definition,
 
@@ -441,12 +438,6 @@ the off-diagonal amplitudes remain small throughout.
 
 > ✓ **Proved** (`critical_time_ordering`). Proved: the ordering comparison reduces to a ratio of positive quantities.
 
-
-> ✓ **Proved** (`critical_time_formula`). Proved by choosing `C₁ = 1` and `C₂ = t_crit_leading`, making both bounds trivial.
-
-
-> ✓ **Proved** (`critical_time_ordering`). Proved after adding hypothesis `h_denom_order` (the denominator ordering follows from μ-normalisation in the paper). Proof uses `div_lt_div` with positivity arguments.
-
 ---
 
 ## 7. Off-Diagonal Dynamics and the Grönwall Bound
@@ -758,12 +749,8 @@ $$\frac{\tilde{t}_s^*}{\tilde{t}_r^*} = \frac{\rho_r^{*\,2L-2}}{\rho_s^{*\,2L-2}
 | Lean name | Paper ref | Status |
 |---|---|---|
 | `JEPA_rho_ordering` | Theorem 8.1 | ⚠️ Needs revision |
-| `critical_time_formula` | Corollary 6.2 | ✓ Proved |
-| `critical_time_ordering` | Corollary 6.2 | ✓ Proved |
 | `diagonal_ODE` | Proposition 6.1 | ⚠️ Needs revision |
-| `gradient_projection` | Lemma 3.1 | ✓ Proved |
 | `offDiag_ODE` | Lemma 7.1 | ⚠️ Needs revision |
 | `offDiag_bound` | Theorem 7.3 | ✓ Proved |
 | `preconditioner_integral_bounded` | Lemma 7.2 | ✓ Proved |
-| `preconditioner_integral_diverges_L1` | — | ✓ Proved |
 | `quasiStatic_approx` | Lemma 5.2 | ⚠️ Needs revision |

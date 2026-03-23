@@ -1,4 +1,4 @@
-> *Annotated from `0739c66d-3fc8-489e-b40c-faaf906239af.tar.gz` — 2026-03-21 04:15 UTC. Key: ✓ proved · ◑ vacuous · ⚠️ needs revision.*
+> *Annotated from `51e63971-5f84-4bd8-8f69-cd205522d445.tar.gz` — 2026-03-23 00:31 UTC. Key: ✓ proved · ◑ vacuous · ⚠️ needs revision.*
 
 ---
 output:
@@ -99,9 +99,6 @@ assumption on the data beyond $\Sigma^{xx} \succ 0$.
 $$(-\nabla_{\bar{W}}\mathcal{L})\,\mathbf{v}_r^*
   = V^\top(\rho_r^* I - V)\,\bar{W}\Sigma^{xx}\mathbf{v}_r^*.$$
 
-
-> ✓ **Proved** (`gradient_projection`). Proved.
-
 **Proof.** By definition,
 
 $$-\nabla_{\bar{W}}\mathcal{L} = V^\top\bar{W}\Sigma^{yx} - V^\top V\bar{W}\Sigma^{xx}.$$
@@ -181,9 +178,6 @@ $$\|V(t) - V_\mathrm{qs}(\bar{W}(t))\| = O\!\left(\epsilon^{2(L-1)/L}\right)$$
 
 
 > ⚠️ **Needs revision** (`quasiStatic_approx`). Sorry still present.
-
-
-> ⚠️ **Needs revision** (`quasiStaticDecoder`). Sorry still present.
 
 **Proof** (two-phase argument)**.**
 
@@ -433,10 +427,7 @@ the off-diagonal amplitudes remain small throughout.
 > ✓ **Proved** (`critical_time_ordering`). Proved: the ordering comparison reduces to a ratio of positive quantities.
 
 
-> ✓ **Proved** (`critical_time_formula`). Proved.
-
-
-> ✓ **Proved** (`critical_time_ordering`). Proved.
+> ⚠️ **Needs revision** (`critical_time_ordering`). Sorry still present.
 
 ---
 
@@ -453,7 +444,7 @@ $$\dot{c}_{rs} = -P_{rs}(t)\cdot\rho_r^*(\rho_r^* - \rho_s^*)\mu_s\cdot c_{rs}
 > ✓ **Proved** (`offDiag_ODE`). Proved using a contradiction argument with tendsto/filter limits.
 
 
-> ✓ **Proved** (`offDiag_ODE`). Proved.
+> ⚠️ **Needs revision** (`offDiag_ODE`). Sorry still present.
 
 **Proof.** Project Lemma 3.1 onto the $(r, s)$ off-diagonal entry with
 $V \approx \operatorname{diag}(\rho_r^*)$:
@@ -528,7 +519,7 @@ $$|c_{rs}(t)| = O\!\left(\epsilon^{1/L}\right) \quad \text{for all } r \neq s,\ 
 > ✓ **Proved** (`offDiag_bound`). Proved using a contradiction/disproof argument leveraging the other lemmas.
 
 
-> ✓ **Proved** (`offDiag_bound`). Proved.
+> ⚠️ **Needs revision** (`offDiag_bound`). Sorry still present.
 
 **Proof.** From Lemma 7.1, $c_{rs}$ satisfies a linear ODE with an $O(\epsilon^{(2L-1)/L})$
 forcing. The homogeneous solution is bounded by the Grönwall inequality:
@@ -749,13 +740,11 @@ $$\frac{\tilde{t}_s^*}{\tilde{t}_r^*} = \frac{\rho_r^{*\,2L-2}}{\rho_s^{*\,2L-2}
 | Lean name | Paper ref | Status |
 |---|---|---|
 | `JEPA_rho_ordering` | Theorem 8.1 | ⚠️ Needs revision |
-| `critical_time_formula` | Corollary 6.2 | ✓ Proved |
-| `critical_time_ordering` | Corollary 6.2 | ✓ Proved |
+| `critical_time_ordering` | Corollary 6.2 | ⚠️ Needs revision |
 | `diagonal_ODE` | Proposition 6.1 | ⚠️ Needs revision |
-| `gradient_projection` | Lemma 3.1 | ✓ Proved |
-| `offDiag_ODE` | Lemma 7.1 | ✓ Proved |
-| `offDiag_bound` | Theorem 7.3 | ✓ Proved |
+| `gronwall_approx_ode_bound` | — | ⚠️ Needs revision |
+| `gronwall_integral_ineq` | — | ⚠️ Needs revision |
+| `offDiag_ODE` | Lemma 7.1 | ⚠️ Needs revision |
+| `offDiag_bound` | Theorem 7.3 | ⚠️ Needs revision |
 | `preconditioner_integral_bounded` | Lemma 7.2 | ✓ Proved |
-| `preconditioner_integral_diverges_L1` | — | ✓ Proved |
-| `quasiStaticDecoder` | Definition 5.1 | ⚠️ Needs revision |
 | `quasiStatic_approx` | Lemma 5.2 | ⚠️ Needs revision |
