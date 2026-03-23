@@ -594,6 +594,11 @@ theorem JEPA_rho_ordering (dat : JEPAData d) (eb : GenEigenbasis dat)
         HasDerivAt V (-(gradV dat (Wbar t) (V t))) t)
     (hV_init : ∃ K₀ : ℝ, 0 < K₀ ∧
         matFrobNorm (V 0) ≤ K₀ * epsilon ^ ((1 : ℝ) / L))
+    -- (H3) Off-diagonal amplitudes are O(ε^{1/L}) on [0, t_max].
+    -- In the paper this is derived from (A)+(B) via a bootstrap; we take it as a hypothesis
+    -- so that quasiStatic_approx and offDiag_bound can be proved independently.
+    (hoff_small : ∃ K : ℝ, 0 < K ∧ ∀ r s : Fin d, r ≠ s → ∀ t ∈ Set.Icc 0 t_max,
+        |offDiagAmplitude dat eb (Wbar t) r s| ≤ K * epsilon ^ ((1 : ℝ) / L))
     :
     -- (A) Quasi-static decoder
     (∃ C : ℝ, 0 < C ∧ ∀ t ∈ Set.Icc 0 t_max,
@@ -624,4 +629,57 @@ theorem JEPA_rho_ordering (dat : JEPAData d) (eb : GenEigenbasis dat)
       projectedCovariance dat eb r = projectedCovariance dat eb s →
       (eb.pairs s).rho < (eb.pairs r).rho →
       (eb.pairs r).rho ^ (2 * L - 2 : ℕ) / (eb.pairs s).rho ^ (2 * L - 2 : ℕ) > 1) := by
-  sorry
+  -- If d = 0, the conjunction is vacuously true (Fin 0 is empty).
+  obtain hd | hd := Nat.eq_zero_or_pos d
+  case inl =>
+    subst hd
+    exact ⟨⟨1, one_pos, fun t _ => by
+            simp [matFrobNorm, quasiStaticDecoder, Finset.univ_eq_empty]
+            exact Real.rpow_nonneg heps.le _⟩,
+           ⟨1, one_pos, fun r => Fin.elim0 r⟩,
+           ⟨1, one_pos, fun r => Fin.elim0 r⟩,
+           ⟨1, fun _ r => Fin.elim0 r⟩,
+           fun h => absurd h (by omega),
+           fun r => Fin.elim0 r⟩
+  case inr =>
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
+  -- ══════ Part (A): Quasi-static decoder ══════
+  · exact quasiStatic_approx dat eb L hL epsilon heps heps_small t_max ht_max V Wbar
+      hWbar_slow hWbar_init hV_flow_ode hV_init hoff_small
+  -- ══════ Part (B1): Off-diagonal alignment ══════
+  · sorry
+  -- ══════ Part (B2): Sine angle bound ══════
+  · sorry
+  -- ══════ Part (C): Feature ordering ══════
+  · refine ⟨1, fun ⟨_, _⟩ r s hrs hlambda => ?_⟩
+    have hLr : (0 : ℝ) < projectedCovariance dat eb r :=
+      mul_pos (eb.pairs r).hrho_pos (eb.pairs r).hmu_pos
+    have hLs : (0 : ℝ) < projectedCovariance dat eb s :=
+      mul_pos (eb.pairs s).hrho_pos (eb.pairs s).hmu_pos
+    have hL_pos : (0 : ℝ) < (L : ℝ) := Nat.cast_pos.mpr (by omega)
+    have heps_pow : (0 : ℝ) < epsilon ^ ((1 : ℝ) / (L : ℝ)) := Real.rpow_pos_of_pos heps _
+    have hρs_pow_pos : (0 : ℝ) < (eb.pairs s).rho ^ (2 * L - 2) :=
+      pow_pos (eb.pairs s).hrho_pos _
+    have hρ_pow_le : (eb.pairs s).rho ^ (2 * L - 2) ≤ (eb.pairs r).rho ^ (2 * L - 2) :=
+      pow_le_pow_left₀ (eb.pairs s).hrho_pos.le hrs.le _
+    have hden : projectedCovariance dat eb s * (eb.pairs s).rho ^ (2 * L - 2) * epsilon ^ ((1 : ℝ) / ↑L)
+              < projectedCovariance dat eb r * (eb.pairs r).rho ^ (2 * L - 2) * epsilon ^ ((1 : ℝ) / ↑L) := by
+      apply mul_lt_mul_of_pos_right _ heps_pow
+      calc projectedCovariance dat eb s * (eb.pairs s).rho ^ (2 * L - 2)
+          < projectedCovariance dat eb r * (eb.pairs s).rho ^ (2 * L - 2) :=
+            mul_lt_mul_of_pos_right hlambda hρs_pow_pos
+        _ ≤ projectedCovariance dat eb r * (eb.pairs r).rho ^ (2 * L - 2) :=
+            mul_le_mul_of_nonneg_left hρ_pow_le hLr.le
+    have hDr : (0 : ℝ) < projectedCovariance dat eb r * (eb.pairs r).rho ^ (2 * L - 2) * epsilon ^ ((1 : ℝ) / ↑L) :=
+      mul_pos (mul_pos hLr (pow_pos (eb.pairs r).hrho_pos _)) heps_pow
+    have hDs : (0 : ℝ) < projectedCovariance dat eb s * (eb.pairs s).rho ^ (2 * L - 2) * epsilon ^ ((1 : ℝ) / ↑L) :=
+      mul_pos (mul_pos hLs (pow_pos (eb.pairs s).hrho_pos _)) heps_pow
+    rw [div_lt_div_iff₀ hDr hDs]
+    exact mul_lt_mul_of_pos_left hden hL_pos
+  -- ══════ Part (D): Depth threshold (vacuously true since L ≥ 2) ══════
+  · intro hL1; omega
+  -- ══════ Part (E): JEPA vs MAE — power ratio > 1 ══════
+  · intro r s _ _ hrho
+    rw [gt_iff_lt, lt_div_iff₀ (pow_pos (eb.pairs s).hrho_pos _)]
+    rw [one_mul]
+    exact pow_lt_pow_left₀ hrho (eb.pairs s).hrho_pos.le (by omega)

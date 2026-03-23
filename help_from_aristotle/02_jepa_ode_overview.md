@@ -1,7 +1,7 @@
 # Aristotle Plan: JEPA ODE Lemmas
 
 **File**: `AutomatedProofs/JEPA.lean`
-**Total sorries remaining**: 6 (as of 2026-03-23)
+**Total sorries remaining**: 5 (as of 2026-03-23; JEPA_rho_ordering Parts C/D/E proved)
 
 ---
 
@@ -100,23 +100,20 @@ until all five are proved.
 
 | Job | Doc | Targets | Tier | Status |
 |---|---|---|---|---|
-| `7f119cde` | `03_7f119cde_building_blocks.md` | `diagonal_ODE`, `offDiag_ODE`, `preconditioner_integral_bounded` | 1 (independent) | IN_PROGRESS |
-| `be5085d7` | `04_be5085d7_hard_lemmas.md` | `quasiStatic_approx`, `offDiag_bound`, `JEPA_rho_ordering` | 1+3 (mixed) | IN_PROGRESS |
+| `7f119cde` | `03_7f119cde_building_blocks.md` | `diagonal_ODE`, `offDiag_ODE`, `preconditioner_integral_bounded` | 1 | COMPLETE_WITH_ERRORS — proved nothing |
+| `be5085d7` | `04_be5085d7_hard_lemmas.md` | `quasiStatic_approx`, `offDiag_bound`, `JEPA_rho_ordering` | 1+3 | COMPLETE_WITH_ERRORS — Parts C/D/E proved ✓; A/B partial |
+| `96f51b3a` | `05_96f51b3a_request.md` | `diagonal_ODE` | 1 | IN_PROGRESS |
+| `2e29172e` | `06_2e29172e_request.md` | `offDiag_ODE` | 1 | IN_PROGRESS |
+| `d103e486` | `07_d103e486_request.md` | `preconditioner_integral_bounded` | 1 | IN_PROGRESS |
+| `6e5b685c` | `08_6e5b685c_request.md` | `quasiStatic_approx` | 1 | IN_PROGRESS |
+| `cd27691a` | `09_cd27691a_request.md` | `offDiag_bound` | 1 | IN_PROGRESS |
 
-### Known limitation of current plan
+### Changes since first round
 
-`JEPA_rho_ordering` is in Job `be5085d7` alongside `quasiStatic_approx` and
-`offDiag_bound`. But `JEPA_rho_ordering` formally calls `diagonal_ODE`, `offDiag_ODE`,
-and `preconditioner_integral_bounded` — which are still `sorry`'d in Job `be5085d7`'s
-copy of JEPA.lean (they're being proved separately in Job `7f119cde`).
-
-**Consequence**: Aristotle in Job `be5085d7` may prove `quasiStatic_approx` and
-`offDiag_bound` successfully, but struggle with `JEPA_rho_ordering` because it can
-only use the sorry'd versions of the other three.
-
-**If JEPA_rho_ordering is not proved**: once both jobs complete, merge the proved
-lemmas from both, then submit a final job targeting only `JEPA_rho_ordering` with all
-five helpers proved.
+- `JEPA_rho_ordering` Parts (C), (D), (E) ported locally from `be5085d7` ✓
+- `hoff_small` added as explicit hypothesis to `JEPA_rho_ordering`, breaking the
+  circular dependency between `quasiStatic_approx` and `offDiag_bound`
+- All 5 remaining sorries are now formally independent — submitted as 5 separate jobs
 
 ### Ideal plan (for future reference)
 

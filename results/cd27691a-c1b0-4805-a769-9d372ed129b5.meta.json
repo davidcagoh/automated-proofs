@@ -1,0 +1,5 @@
+{
+  "paper": "my_theorems/JEPA_Proof_Lecture_v3.md",
+  "prompt": "Fill in the sorry in AutomatedProofs/JEPA.lean for ONLY the theorem offDiag_bound (line ~508). Leave all other sorries untouched. The proof applies gronwall_approx_ode_bound from AutomatedProofs/Lemmas.lean to f = c_rs, with alpha(t) = kappa * preconditioner L (sigma_r t) (sigma_s t) where kappa = rho_r * (rho_r - rho_s) * mu_s > 0, eta = C * eps^{(2L-1)/L} from h_ode, f0 = C0 * eps^{1/L} from h_init, and A_int = kappa * C_int from h_int_bound. You will need to establish ContinuousOn c_rs and HasDerivAt c_rs from the hypothesis h_ode (c_rs satisfies the ODE bound on Icc 0 t_max). The final bound is |c_rs(t)| <= C * eps^{1/L} using eps^{(2L-1)/L} <= eps^{1/L} since eps < 1 and (2L-1)/L >= 1/L.",
+  "submitted_at": "2026-03-23T15:13:58.950395+00:00"
+}

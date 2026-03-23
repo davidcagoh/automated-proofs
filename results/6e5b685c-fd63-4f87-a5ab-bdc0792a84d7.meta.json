@@ -1,0 +1,5 @@
+{
+  "paper": "my_theorems/JEPA_Proof_Lecture_v3.md",
+  "prompt": "Fill in the sorry in AutomatedProofs/JEPA.lean for ONLY the lemma quasiStatic_approx (line ~214). Leave all other sorries untouched. The proof is a two-phase ODE argument: Phase A shows the decoder transient converges exponentially on timescale O(eps^{-2/L}) with frozen Wbar, using HasDerivAt and gronwall_approx_ode_bound from Lemmas.lean. Phase B uses a contraction-drift bound: the quasi-static error satisfies d/dt ||V - V_qs||_F <= -kappa * ||V - V_qs||_F + C * eps^2 (from hWbar_slow), giving ||V(t) - V_qs(Wbar(t))||_F <= C * eps^{2(L-1)/L} by Gronwall. The off-diagonal bound is available as hypothesis hoff_small.",
+  "submitted_at": "2026-03-23T15:13:34.171301+00:00"
+}
