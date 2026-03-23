@@ -22,6 +22,7 @@ import os
 import pathlib
 import sys
 import tarfile
+import textwrap
 from datetime import datetime, timezone
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
@@ -31,7 +32,60 @@ import pathspec
 from aristotlelib import Project, AristotleAPIError
 from aristotlelib.local_file_utils import should_skip_input_file, get_pruned_dirnames
 
-EXTRA_EXCLUDE_DIRS = {".claude", ".github", "results", "scripts", "my_theorems", "proofs-from-literature", "memory", "reports"}
+EXTRA_EXCLUDE_DIRS = {".claude", ".github", "results", "scripts", "my_theorems", "proofs-from-literature", "memory", "reports", "help_from_aristotle"}
+
+
+def list_tar_files(tar_bytes: bytes) -> list[str]:
+    buf = io.BytesIO(tar_bytes)
+    with tarfile.open(fileobj=buf, mode="r:gz") as tf:
+        return sorted(m.name for m in tf.getmembers() if not m.isdir())
+
+
+def write_request_doc(
+    project_id: str,
+    paper: pathlib.Path,
+    prompt: str,
+    file_list: list[str],
+    submitted_at: str,
+) -> pathlib.Path:
+    short_id = project_id[:8]
+    doc_dir = pathlib.Path("help_from_aristotle")
+    doc_dir.mkdir(exist_ok=True)
+    existing = sorted(doc_dir.glob("[0-9][0-9]_*.md"))
+    next_num = int(existing[-1].name[:2]) + 1 if existing else 1
+    doc_path = doc_dir / f"{next_num:02d}_{short_id}_request.md"
+    files_block = "\n".join(f"- `{f}`" for f in file_list)
+    doc_path.write_text(textwrap.dedent(f"""\
+        # Aristotle Submission: {short_id}
+
+        **Job ID**: `{project_id}`
+        **Submitted**: {submitted_at}
+        **Paper**: `{paper}`
+        **Status**: IN_PROGRESS
+
+        ## Prompt
+
+        ```
+        {prompt}
+        ```
+
+        ## Files Sent
+
+        {files_block}
+
+        ## Target Lemmas
+
+        <!-- TODO: list which lemmas this submission is targeting and why -->
+
+        ## Justification
+
+        <!-- TODO: explain why these lemmas need Aristotle -->
+
+        ## Outcome
+
+        <!-- Fill in after job completes -->
+    """))
+    return doc_path
 
 
 def build_filtered_tar(project_dir: pathlib.Path) -> bytes:
@@ -123,18 +177,29 @@ async def main() -> None:
     finally:
         tmp_tar.unlink(missing_ok=True)
 
+    submitted_at = datetime.now(timezone.utc).isoformat()
+
     results_dir = pathlib.Path("results")
     results_dir.mkdir(exist_ok=True)
     meta = results_dir / f"{project.project_id}.meta.json"
     meta.write_text(json.dumps({
         "paper": str(paper),
         "prompt": prompt,
-        "submitted_at": datetime.now(timezone.utc).isoformat(),
+        "submitted_at": submitted_at,
     }, indent=2))
+
+    doc_path = write_request_doc(
+        project_id=project.project_id,
+        paper=paper,
+        prompt=prompt,
+        file_list=list_tar_files(tar_bytes),
+        submitted_at=submitted_at,
+    )
 
     print(f"\nSubmitted:  {project.project_id}")
     print(f"Paper:      {paper}")
     print(f"Prompt:     {prompt}")
+    print(f"\n→ Fill in justification: {doc_path}")
     print(f"\nWhen Aristotle emails, run:  python scripts/retrieve.py")
 
 

@@ -31,6 +31,11 @@ DONE_STATUSES = {
     ProjectStatus.OUT_OF_BUDGET,
 }
 
+SKIP_STATUSES = {
+    ProjectStatus.CANCELED,
+    ProjectStatus.FAILED,
+}
+
 
 def load_meta(meta_path: pathlib.Path) -> dict:
     try:
@@ -63,6 +68,11 @@ async def process_one(project_id: str, meta: dict, results_dir: pathlib.Path) ->
         project = await Project.from_id(project_id)
     except AristotleAPIError as e:
         print(f"  {project_id[:8]}…  could not fetch: {e}")
+        return False
+
+    if project.status in SKIP_STATUSES:
+        pct = f" ({project.percent_complete}%)" if project.percent_complete is not None else ""
+        print(f"  {project_id[:8]}…  {project.status.value}{pct}  — skipping")
         return False
 
     if project.status not in DONE_STATUSES:

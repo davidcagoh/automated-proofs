@@ -4,4 +4,7 @@ aristotle-docs.md
 CLAUDE.md
 memory/
 proofs-from-literature/
-DS_Store
+.DS_Store
+**/.DS_Store
+.claude/
+results/*.tar.gz
