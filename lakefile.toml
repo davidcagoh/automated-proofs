@@ -12,7 +12,7 @@ maxSynthPendingDepth = 3
 [[require]]
 name = "mathlib"
 scope = "leanprover-community"
-rev = "v4.29.0-rc6"
+rev = "v4.28.0"
 git = "https://github.com/leanprover-community/mathlib4.git"
 
 [[lean_lib]]

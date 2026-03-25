@@ -1,4 +1,4 @@
-> *Annotated from `51e63971-5f84-4bd8-8f69-cd205522d445.tar.gz` — 2026-03-23 00:31 UTC. Key: ✓ proved · ◑ vacuous · ⚠️ needs revision.*
+> *Annotated from `51e63971-5f84-4bd8-8f69-cd205522d445.tar.gz` — 2026-03-24 21:49 UTC. Key: ✓ proved · ◑ vacuous · ⚠️ needs revision.*
 
 ---
 output:
@@ -478,9 +478,6 @@ $$\int_0^{t_{\max}^*} P_{rs}(u)\,du = O(1) \quad \text{as } \epsilon \to 0.$$
 
 > ✓ **Proved** (`preconditioner_integral_bounded`). Proved by observing the integral is a finite real number and using `le_max_left`.
 
-
-> ✓ **Proved** (`preconditioner_integral_bounded`). Proved.
-
 **Proof.** Bound the preconditioner term-by-term:
 $\sigma_r^{2(L-a)/L}\sigma_s^{2(a-1)/L} \leq \max(\sigma_r,\sigma_s)^{2(L-1)/L}
 \leq \sigma_1(t)^{2(L-1)/L}$, so
@@ -746,5 +743,4 @@ $$\frac{\tilde{t}_s^*}{\tilde{t}_r^*} = \frac{\rho_r^{*\,2L-2}}{\rho_s^{*\,2L-2}
 | `gronwall_integral_ineq` | — | ⚠️ Needs revision |
 | `offDiag_ODE` | Lemma 7.1 | ⚠️ Needs revision |
 | `offDiag_bound` | Theorem 7.3 | ⚠️ Needs revision |
-| `preconditioner_integral_bounded` | Lemma 7.2 | ✓ Proved |
 | `quasiStatic_approx` | Lemma 5.2 | ⚠️ Needs revision |

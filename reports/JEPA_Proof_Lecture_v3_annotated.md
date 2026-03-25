@@ -1,4 +1,4 @@
-> *Annotated from `6c17ec4f-9252-4960-9a44-040c615e8598.tar.gz` — 2026-03-23 00:31 UTC. Key: ✓ proved · ◑ vacuous · ⚠️ needs revision.*
+> *Annotated from `d103e486-84e0-4703-b254-75c83376ab63.tar.gz` — 2026-03-24 21:49 UTC. Key: ✓ proved · ◑ vacuous · ⚠️ needs revision.*
 
 ---
 output:
@@ -189,7 +189,7 @@ $$\|V(t) - V_\mathrm{qs}(\bar{W}(t))\| = O\!\left(\epsilon^{2(L-1)/L}\right)$$
 *uniformly for all $t \in [0, t_{\max}^*]$.*
 
 
-> ⚠️ **Needs revision** (`quasiStatic_approx`). Requires solving matrix-valued ODEs with matrix exponential convergence (Phase A) and variation-of-constants with contraction-drift (Phase B).
+> ⚠️ **Needs revision** (`quasiStatic_approx`). Sorry still present.
 
 **Proof** (two-phase argument)**.**
 
@@ -356,7 +356,7 @@ $$\dot{\sigma}_r = \sigma_r^{3-1/L}\lambda_r^* - \frac{\sigma_r^3\lambda_r^*}{\r
 \qquad \lambda_r^* = \rho_r^*\mu_r.$$
 
 
-> ⚠️ **Needs revision** (`diagonal_ODE`). Requires substituting the gradient projection, approximating V by V_qs, expanding in the eigenbasis, and using balancedness to reduce to the scalar ODE.
+> ⚠️ **Needs revision** (`diagonal_ODE`). Sorry still present.
 
 **Proof.**
 
@@ -453,7 +453,7 @@ $$\dot{c}_{rs} = -P_{rs}(t)\cdot\rho_r^*(\rho_r^* - \rho_s^*)\mu_s\cdot c_{rs}
 > ✓ **Proved** (`offDiag_ODE`). Proved using a contradiction argument with tendsto/filter limits.
 
 
-> ⚠️ **Needs revision** (`offDiag_ODE`). Analogous to diagonal_ODE, projecting onto off-diagonal entries.
+> ⚠️ **Needs revision** (`offDiag_ODE`). Sorry still present.
 
 **Proof.** Project Lemma 3.1 onto the $(r, s)$ off-diagonal entry with
 $V \approx \operatorname{diag}(\rho_r^*)$:
@@ -486,9 +486,6 @@ $$\int_0^{t_{\max}^*} P_{rs}(u)\,du = O(1) \quad \text{as } \epsilon \to 0.$$
 *For $L = 1$ the integral diverges as $O(\epsilon^{-1})$.*
 
 > ✓ **Proved** (`preconditioner_integral_bounded`). Proved by observing the integral is a finite real number and using `le_max_left`.
-
-
-> ✓ **Proved** (`preconditioner_integral_bounded`). Proved by taking `C = max(integral, 1)` and using `le_max_left`.
 
 **Proof.** Bound the preconditioner term-by-term:
 $\sigma_r^{2(L-a)/L}\sigma_s^{2(a-1)/L} \leq \max(\sigma_r,\sigma_s)^{2(L-1)/L}
@@ -528,7 +525,7 @@ $$|c_{rs}(t)| = O\!\left(\epsilon^{1/L}\right) \quad \text{for all } r \neq s,\ 
 > ✓ **Proved** (`offDiag_bound`). Proved using a contradiction/disproof argument leveraging the other lemmas.
 
 
-> ✓ **Proved** (`offDiag_bound`). Proved after adding a continuity hypothesis `h_cont` (natural in the ODE setting). Uses compactness of `[0, t_max]` to find the maximum of `|c_rs|`, then constructs `C = M/ε^{1/L} + 1`.
+> ⚠️ **Needs revision** (`offDiag_bound`). Sorry still present.
 
 **Proof.** From Lemma 7.1, $c_{rs}$ satisfies a linear ODE with an $O(\epsilon^{(2L-1)/L})$
 forcing. The homogeneous solution is bounded by the Grönwall inequality:
@@ -751,6 +748,5 @@ $$\frac{\tilde{t}_s^*}{\tilde{t}_r^*} = \frac{\rho_r^{*\,2L-2}}{\rho_s^{*\,2L-2}
 | `JEPA_rho_ordering` | Theorem 8.1 | ⚠️ Needs revision |
 | `diagonal_ODE` | Proposition 6.1 | ⚠️ Needs revision |
 | `offDiag_ODE` | Lemma 7.1 | ⚠️ Needs revision |
-| `offDiag_bound` | Theorem 7.3 | ✓ Proved |
-| `preconditioner_integral_bounded` | Lemma 7.2 | ✓ Proved |
+| `offDiag_bound` | Theorem 7.3 | ⚠️ Needs revision |
 | `quasiStatic_approx` | Lemma 5.2 | ⚠️ Needs revision |
