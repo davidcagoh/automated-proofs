@@ -1,5 +1,0 @@
-{
-  "paper": "my_theorems/JEPA_Proof_Lecture_v3.md",
-  "prompt": "Fill in the sorries in AutomatedProofs/JEPA.lean. Focus ONLY on these three lemmas: diagonal_ODE (line ~288), offDiag_ODE (line ~427), preconditioner_integral_bounded (line ~461). The helper lemmas in AutomatedProofs/Lemmas.lean are already proved and available. Leave all other sorries (quasiStatic_approx, offDiag_bound, JEPA_rho_ordering) untouched.",
-  "submitted_at": "2026-03-23T00:18:27.748452+00:00"
-}

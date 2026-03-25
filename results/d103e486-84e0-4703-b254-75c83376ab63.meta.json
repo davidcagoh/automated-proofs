@@ -1,5 +1,0 @@
-{
-  "paper": "my_theorems/JEPA_Proof_Lecture_v3.md",
-  "prompt": "Fill in the sorry in AutomatedProofs/JEPA.lean for ONLY the lemma preconditioner_integral_bounded (line ~446). Leave all other sorries untouched. The proof should use change-of-variables: the diagonal ODE lower bound (passed as hypothesis h_sigma1_lb) gives sigma_1 grows at rate >= C * lambda_1* * sigma_1^{(2L-1)/L}, so dt <= dsigma_1 / (C * lambda_1* * sigma_1^{(2L-1)/L}). Substituting gives integral of preconditioner <= (L / (C * lambda_1*)) * integral of sigma_1^{-1/L} dsigma_1, which is finite for L >= 2 since -1/L > -1. Helper lemmas in AutomatedProofs/Lemmas.lean are available.",
-  "submitted_at": "2026-03-23T15:13:17.610393+00:00"
-}

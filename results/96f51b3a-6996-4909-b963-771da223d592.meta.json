@@ -1,5 +1,0 @@
-{
-  "paper": "my_theorems/JEPA_Proof_Lecture_v3.md",
-  "prompt": "Fill in the sorry in AutomatedProofs/JEPA.lean for ONLY the lemma diagonal_ODE (line ~258). Leave all other sorries untouched. The proof should expand the preconditioned gradient flow ODE, apply gradient_projection (already proved), substitute the quasi-static decoder approximation (passed as hypothesis hV_qs), and bound off-diagonal corrections via hypothesis hoff_diag_small. Helper lemmas in AutomatedProofs/Lemmas.lean are available.",
-  "submitted_at": "2026-03-23T15:12:52.538849+00:00"
-}

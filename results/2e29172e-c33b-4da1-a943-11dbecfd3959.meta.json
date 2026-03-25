@@ -1,5 +1,0 @@
-{
-  "paper": "my_theorems/JEPA_Proof_Lecture_v3.md",
-  "prompt": "Fill in the sorry in AutomatedProofs/JEPA.lean for ONLY the lemma offDiag_ODE (line ~398). Leave all other sorries untouched. The proof should expand the preconditioned gradient flow ODE for the off-diagonal entry c_rs, apply gradient_projection (already proved), substitute the quasi-static decoder approximation (passed as hypothesis hV_qs), and bound the residual to get |dc_rs/dt + P_rs * rho_r * (rho_r - rho_s) * mu_s * c_rs| <= C * eps^{(2L-1)/L}. Helper lemmas in AutomatedProofs/Lemmas.lean are available.",
-  "submitted_at": "2026-03-23T15:13:05.646520+00:00"
-}
