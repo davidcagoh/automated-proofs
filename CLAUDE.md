@@ -20,7 +20,8 @@ Part of the **Stochastic Proofs** workspace. Shared conventions and Aristotle wo
 | `JepaLearningOrder/Lemmas.lean` | Supporting lemmas (Grönwall, PD bounds, contractive bound) |
 | `JepaLearningOrder/OffDiagHelpers.lean` | Bridging helper lemmas |
 | `JepaLearningOrder/GronwallIntegral.lean` | Grönwall integral machinery |
-| `JepaLearningOrder/BootstrapLemmas.lean` | Three sub-lemmas decomposing `bootstrap_consistency` (session 24) |
+| `JepaLearningOrder/PDLowerHelpers.lean` | Six helper lemmas for pd_lower_from_offDiag (Gershgorin, Frobenius norm, det factorization) |
+| `JepaLearningOrder/BootstrapLemmas.lean` | Three sub-lemmas + proved `bootstrap_consistency` (sessions 24–28) |
 | `my_theorems/paper.tex` | LaTeX paper — **authoritative spec** for what the theorem should say |
 
 ## Build commands
