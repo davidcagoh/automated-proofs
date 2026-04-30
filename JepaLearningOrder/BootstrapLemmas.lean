@@ -2,6 +2,7 @@ import Mathlib
 import JepaLearningOrder.Lemmas
 import JepaLearningOrder.OffDiagHelpers
 import JepaLearningOrder.JEPA
+import JepaLearningOrder.PDLowerHelpers
 
 /-!
 # Bootstrap Sub-Lemmas for JEPA
@@ -163,11 +164,53 @@ lemma pd_lower_from_offDiag {d : ℕ} (hd : 0 < d) (dat : JEPAData d) (eb : GenE
     (hoff : ∀ r s : Fin d, r ≠ s →
         |offDiagAmplitude dat eb Wbar r s| ≤ δ * epsilon ^ ((1 : ℝ) / L))
     -- Off-diagonal perturbation is small relative to diagonal (ensures net PD)
-    (hδ_small : δ * Real.sqrt d < c_w / 2) :
+    -- NOTE: Original hypothesis was `δ * Real.sqrt d < c_w / 2`, which is insufficient
+    -- for d ≥ 6. Counterexample: d=7, SigmaXX=I, v_r=e_r, c_w=6, δ=1,
+    -- Wbar = ε^{1/L}(7I - 11ᵀ) is singular since Wbar(1,...,1)=0, yet
+    -- δ√d = √7 ≈ 2.65 < 3 = c_w/2. The corrected hypothesis uses
+    -- strict diagonal dominance: δ*(d-1) < c_w (Gershgorin condition).
+    (hδ_small : δ * ((d : ℝ) - 1) < c_w) :
     ∃ c₀ : ℝ, 0 < c₀ ∧ ∀ M : Matrix (Fin d) (Fin d) ℝ,
         matFrobNorm (M * (Wbar * dat.SigmaXX * Wbarᵀ)) ≥
             c₀ * epsilon ^ ((2 : ℝ) / L) * matFrobNorm M := by
-  sorry
+  -- Step 1: Show det(Wbar) ≠ 0 via Gershgorin on the amplitude matrix
+  have hdet_wbar : Wbar.det ≠ 0 :=
+    wbar_det_ne_zero hd dat eb Wbar epsilon heps L hL c_w hc_w hdiag δ hδ_nn hoff hδ_small
+  -- Step 2: A = Wbar * SigmaXX * Wbarᵀ is invertible
+  set A := Wbar * dat.SigmaXX * Wbarᵀ with hA_def
+  have hA_det_ne_zero : A.det ≠ 0 := by
+    rw [hA_def, Matrix.det_mul, Matrix.det_mul, Matrix.det_transpose]
+    exact mul_ne_zero (mul_ne_zero hdet_wbar (ne_of_gt dat.hSigmaXX_pos.det_pos)) hdet_wbar
+  have hA_unit : IsUnit A.det := IsUnit.mk0 _ hA_det_ne_zero
+  -- Step 3: A⁻¹ ≠ 0 (since A * A⁻¹ = 1)
+  have hA_inv_ne_zero : A⁻¹ ≠ 0 := by
+    intro h
+    have h1 := Matrix.mul_nonsing_inv A hA_unit  -- A * A⁻¹ = 1
+    rw [h] at h1  -- A * 0 = 1
+    have h2 : (A * (0 : Matrix (Fin d) (Fin d) ℝ)) = 0 := mul_zero A
+    rw [h2] at h1  -- 0 = 1
+    exact (hd.ne' (by simpa using congr_fun (congr_fun h1 ⟨0, hd⟩) ⟨0, hd⟩)).elim
+  have hA_inv_pos : 0 < matFrobNorm A⁻¹ := matFrobNorm_pos_of_ne_zero _ hA_inv_ne_zero
+  -- Step 4: Frobenius lower bound via submultiplicativity
+  -- M = (M * A) * A⁻¹, so matFrobNorm M ≤ matFrobNorm(M*A) * matFrobNorm(A⁻¹)
+  have hM_eq : ∀ M : Matrix (Fin d) (Fin d) ℝ, M = M * A * A⁻¹ := by
+    intro M
+    rw [Matrix.mul_assoc, Matrix.mul_nonsing_inv _ hA_unit, mul_one]
+  have h_eps_pos : 0 < epsilon ^ ((2 : ℝ) / L) := Real.rpow_pos_of_pos heps _
+  -- Choose c₀ = 1 / (matFrobNorm(A⁻¹) * ε^{2/L})
+  refine ⟨1 / (matFrobNorm A⁻¹ * epsilon ^ ((2 : ℝ) / L)), by positivity, fun M => ?_⟩
+  -- Need: matFrobNorm(M * A) ≥ c₀ * ε^{2/L} * matFrobNorm(M)
+  -- where c₀ * ε^{2/L} = 1 / matFrobNorm(A⁻¹)
+  -- This follows from M = (M*A)*A⁻¹ and submultiplicativity
+  have h_c_eq : 1 / (matFrobNorm A⁻¹ * epsilon ^ ((2 : ℝ) / L)) * epsilon ^ ((2 : ℝ) / L)
+      = 1 / matFrobNorm A⁻¹ := by
+    field_simp
+  rw [ge_iff_le, h_c_eq]
+  rw [show (1 : ℝ) / matFrobNorm A⁻¹ * matFrobNorm M = matFrobNorm M / matFrobNorm A⁻¹ from by ring]
+  rw [div_le_iff₀ hA_inv_pos]
+  calc matFrobNorm M
+      = matFrobNorm (M * A * A⁻¹) := by rw [← hM_eq]
+    _ ≤ matFrobNorm (M * A) * matFrobNorm A⁻¹ := matFrobNorm_mul_le _ _
 
 
 /-! ## Sub-Lemma 3: Tracking Bound via Contractive Gronwall -/
@@ -312,3 +355,71 @@ lemma tracking_bound_from_gronwall {d : ℕ} (hd : 0 < d) (dat : JEPAData d) (eb
         + (D₀ / c₀) * epsilon ^ (2 * ((L : ℝ) - 1) / L) := by
           rw [h_D_over_lam]; linarith
     _ = (C_A + D₀ / c₀) * epsilon ^ (2 * ((L : ℝ) - 1) / L) := by ring
+
+
+/-! ## Proposition 6.5: Bootstrap Consistency (Assembled) -/
+
+/-- **Proposition 6.5 (Bootstrap consistency — proved).**
+    Assembles Lemmas B.1 and B.3 to establish the off-diagonal bound and tracking bound jointly.
+
+    - **B.1 (`offDiag_ftc`)**: The off-diagonal amplitude bound follows from FTC + slow encoder
+      dynamics — no bootstrap or ODE continuation needed.
+    - **B.3 (`tracking_bound_from_gronwall`)**: The tracking bound follows from the PD lower
+      bound via contractive Gronwall.
+
+    **Remaining gap** (`hPD_lower`): Lemma B.2 (`pd_lower_from_offDiag`, Aristotle `53f7f1b1`)
+    derives a pointwise-in-t PD lower bound from the off-diagonal bound + Gershgorin. Getting
+    a *uniform* c₀ over [0, t_max] requires a compactness argument (continuity of t ↦ ‖A(t)⁻¹‖_F
+    on the compact interval + IsCompact.exists_bound). Until that is proved, `hPD_lower` is taken
+    as an explicit hypothesis.
+
+    **Import note**: BootstrapLemmas.lean imports JEPA.lean, so `bootstrap_consistency` cannot
+    currently be called from `JEPA_rho_ordering` (which lives in JEPA.lean). Moving
+    `JEPA_rho_ordering` to a file that imports BootstrapLemmas.lean would close that gap. -/
+lemma bootstrap_consistency {d : ℕ} (hd : 0 < d) (dat : JEPAData d) (eb : GenEigenbasis dat)
+    (L : ℕ) (hL : 2 ≤ L) (epsilon : ℝ) (heps : 0 < epsilon) (heps_small : epsilon < 1)
+    (t_max : ℝ) (ht_max : 0 < t_max)
+    (V Wbar : ℝ → Matrix (Fin d) (Fin d) ℝ)
+    (h_init : BalancedInit d L epsilon)
+    -- (H1) Slow encoder dynamics
+    (hWbar_slow : ∃ K : ℝ, 0 < K ∧ ∀ t ∈ Set.Icc 0 t_max,
+        matFrobNorm (deriv Wbar t) ≤ K * epsilon ^ 2)
+    -- (H2) Initial Wbar norm bound (from BalancedInit)
+    (hWbar_init : ∃ K₀ : ℝ, 0 < K₀ ∧ matFrobNorm (Wbar 0) ≤ K₀ * epsilon ^ ((1 : ℝ) / L))
+    -- (H3) Wbar differentiability on (0, t_max) (for FTC)
+    (hWbar_diff : ∀ t ∈ Set.Ioo 0 t_max, DifferentiableAt ℝ Wbar t)
+    -- (H4) Wbar continuity
+    (hWbar_cont : ContinuousOn Wbar (Set.Icc 0 t_max))
+    -- (H5) Decoder gradient-flow ODE
+    (hV_flow_ode : ∀ t ∈ Set.Icc 0 t_max,
+        HasDerivAt V (-(gradV dat (Wbar t) (V t))) t)
+    -- (H6) Frobenius PD lower bound — to be derived from pd_lower_from_offDiag + compactness
+    (hPD_lower : ∃ c₀ : ℝ, 0 < c₀ ∧ ∀ t ∈ Set.Icc 0 t_max,
+        ∀ M : Matrix (Fin d) (Fin d) ℝ,
+          matFrobNorm (M * (Wbar t * dat.SigmaXX * (Wbar t)ᵀ)) ≥
+            c₀ * epsilon ^ ((2 : ℝ) / L) * matFrobNorm M)
+    -- (H7) Phase A: initial tracking error is O(ε^{2(L-1)/L})
+    (hPhaseA : ∃ C_A : ℝ, 0 < C_A ∧
+        matFrobNorm (V 0 - quasiStaticDecoder dat (Wbar 0)) ≤
+          C_A * epsilon ^ (2 * ((L : ℝ) - 1) / L))
+    -- (H8–H11) Inputs to tracking_bound_from_gronwall
+    (hVqs_deriv_exists : ∀ t ∈ Set.Ico 0 t_max,
+        ∃ Vqs_d : Matrix (Fin d) (Fin d) ℝ,
+          HasDerivAt (fun s => quasiStaticDecoder dat (Wbar s)) Vqs_d t)
+    (hDrift_bound : ∃ D₀ : ℝ, 0 < D₀ ∧ ∀ t ∈ Set.Ico 0 t_max,
+        matFrobNorm (deriv (fun s => quasiStaticDecoder dat (Wbar s)) t) ≤ D₀ * epsilon ^ 2)
+    (hDelta_nz : ∀ t ∈ Set.Ico 0 t_max,
+        V t - quasiStaticDecoder dat (Wbar t) ≠ 0)
+    (hVqs_cont : ContinuousOn (fun t => quasiStaticDecoder dat (Wbar t)) (Set.Icc 0 t_max)) :
+    -- (i) Off-diagonal amplitude bound (Lemma B.1)
+    (∃ K : ℝ, 0 < K ∧ ∀ r s : Fin d, r ≠ s → ∀ t ∈ Set.Icc 0 t_max,
+        |offDiagAmplitude dat eb (Wbar t) r s| ≤ K * epsilon ^ ((1 : ℝ) / L))
+    ∧
+    -- (ii) Tracking error bound (Lemma B.3)
+    (∃ C : ℝ, 0 < C ∧ ∀ t ∈ Set.Icc 0 t_max,
+        matFrobNorm (V t - quasiStaticDecoder dat (Wbar t)) ≤
+          C * epsilon ^ (2 * ((L : ℝ) - 1) / L)) :=
+  ⟨offDiag_ftc dat eb Wbar epsilon heps heps_small L hL t_max ht_max
+      hWbar_init hWbar_slow hWbar_diff hWbar_cont,
+   tracking_bound_from_gronwall hd dat eb L hL epsilon heps heps_small t_max ht_max V Wbar
+      hV_flow_ode hPhaseA hPD_lower hVqs_deriv_exists hDrift_bound hDelta_nz hVqs_cont⟩

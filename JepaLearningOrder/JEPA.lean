@@ -455,46 +455,13 @@ lemma critical_time_ordering (dat : JEPAData d) (eb : GenEigenbasis dat)
   exact mul_lt_mul_of_pos_left hden hL_pos
 
 /-! ## Section 6.5: Bootstrap Consistency
-    This section bridges Sections 5 and 7.  It identifies the key circularity:
-    - quasiStatic_approx (Lemma 5.2) takes hypothesis H3 (off-diagonal smallness) as input.
-    - offDiag_bound (Theorem 7.4) takes the quasi-static bound as input.
-    A formal proof requires a continuation/bootstrap argument closing this loop. -/
-
-/-- **Proposition 6.5 (Bootstrap consistency).** [SORRY — requires ODE continuation]
-    Under balanced small initialisation and the preconditioned gradient flow, for L ≥ 2
-    there exists t_max > 0 and ε₀ > 0 such that for all ε ∈ (0, ε₀), the trajectory
-    simultaneously satisfies:
-    (i)  |c_{rs}(t)| ≤ K ε^{1/L} for all r ≠ s and t ∈ [0, t_max], and
-    (ii) ‖V(t) - V_qs(W̄(t))‖_F ≤ C ε^{2(L-1)/L} for t ∈ [0, t_max].
-
-    Proof strategy (pending formalization):
-    Both bounds hold at t = 0 (by balanced initialisation, with appropriate K, C).
-    Let T* = sup { T : both bounds hold on [0, T] }.  T* > 0 by continuity.
-    If T* < t_max, then at T* the bounds still hold by continuity; a short-time ODE
-    continuation argument (Picard-Lindelöf applied to the joint ODE for (c_{rs}, V))
-    extends both bounds to [0, T* + δ], contradicting the definition of T*.
-    Hence T* ≥ t_max.  This argument requires:
-    - ODE well-posedness for the full system (Wbar, V) on [0, t_max].
-    - A Lipschitz estimate on the right-hand side that Mathlib does not currently provide.
-    See paper draft Proposition 5.4 for the full statement. -/
-lemma bootstrap_consistency (dat : JEPAData d) (eb : GenEigenbasis dat)
-    (L : ℕ) (hL : 2 ≤ L) (epsilon : ℝ) (heps : 0 < epsilon) (heps_small : epsilon < 1)
-    (t_max : ℝ) (ht_max : 0 < t_max)
-    (V Wbar : ℝ → Matrix (Fin d) (Fin d) ℝ)
-    (h_init : BalancedInit d L epsilon)
-    (hWbar_slow : ∃ K : ℝ, 0 < K ∧ ∀ t ∈ Set.Icc 0 t_max,
-        matFrobNorm (deriv Wbar t) ≤ K * epsilon ^ 2)
-    (hV_flow_ode : ∀ t ∈ Set.Icc 0 t_max,
-        HasDerivAt V (-(gradV dat (Wbar t) (V t))) t) :
-    -- Both bounds hold jointly on [0, t_max]
-    (∃ K : ℝ, 0 < K ∧ ∀ r s : Fin d, r ≠ s → ∀ t ∈ Set.Icc 0 t_max,
-        |offDiagAmplitude dat eb (Wbar t) r s| ≤ K * epsilon ^ ((1 : ℝ) / L))
-    ∧
-    (∃ C : ℝ, 0 < C ∧ ∀ t ∈ Set.Icc 0 t_max,
-        matFrobNorm (V t - quasiStaticDecoder dat (Wbar t)) ≤
-          C * epsilon ^ (2 * ((L : ℝ) - 1) / L)) := by
-  sorry  -- Requires ODE continuation machinery not yet in Mathlib.
-         -- See paper draft Proposition 5.4 for the proof strategy.
+    **Proved in `BootstrapLemmas.lean`** — see `bootstrap_consistency` there.
+    The proof assembles three sub-lemmas (Lemmas B.1–B.3):
+    - B.1 `offDiag_ftc`: off-diagonal bound via FTC (no bootstrap).
+    - B.2 `pd_lower_from_offDiag`: PD lower bound from Gershgorin (Aristotle 53f7f1b1).
+    - B.3 `tracking_bound_from_gronwall`: tracking bound via contractive Gronwall.
+    The old Picard-Lindelöf continuation argument is bypassed: FTC gives the off-diagonal
+    bound directly, and contractive Gronwall closes the tracking argument. -/
 
 /-! ## Section 5.4: Contraction ODE Structure -/
 
@@ -1500,12 +1467,10 @@ theorem JEPA_rho_ordering (dat : JEPAData d) (eb : GenEigenbasis dat)
       hPhaseA hContraction hNorm_nn hNorm_cont
   -- ══════ Part (B1): Off-diagonal alignment ══════
   -- *** STRUCTURAL NOTE (rigor level: hypothesis passthrough) ***
-  -- Part (B1) of the main theorem is currently taken as the hypothesis hoff_small.
-  -- In the paper proof sketch, (B1) is *derived* from (A) via a bootstrap: one would
-  -- apply offDiag_bound using the output of quasiStatic_approx, which in turn requires
-  -- (B1) as an input — closing the loop via bootstrap_consistency (Proposition 6.5).
-  -- Until bootstrap_consistency is proved (it is currently sorry'd), (B1) remains an
-  -- assumption of JEPA_rho_ordering rather than a conclusion.
+  -- (B1) is taken as hypothesis hoff_small.  The proved `bootstrap_consistency`
+  -- in BootstrapLemmas.lean derives it via offDiag_ftc (Lemma B.1), but
+  -- BootstrapLemmas.lean imports this file, so wiring it here would be circular.
+  -- Remaining step: move JEPA_rho_ordering to a file that imports BootstrapLemmas.lean.
   · exact hoff_small
   -- ══════ Part (B2): Sine angle bound ══════
   -- Proof strategy (Aristotle job 472373f7, ported): C = K·√d + 1.

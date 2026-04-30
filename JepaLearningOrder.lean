@@ -3,4 +3,5 @@ import JepaLearningOrder.Lemmas
 import JepaLearningOrder.OffDiagHelpers
 import JepaLearningOrder.JEPA
 import JepaLearningOrder.GronwallIntegral
+import JepaLearningOrder.PDLowerHelpers
 import JepaLearningOrder.BootstrapLemmas
