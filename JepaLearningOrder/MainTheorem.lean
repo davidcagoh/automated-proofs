@@ -156,53 +156,105 @@ theorem JEPA_rho_ordering' (dat : JEPAData d) (eb : GenEigenbasis dat)
     Status: stub with `sorry` — to be discharged after Jobs E, F, G land.
 -/
 
-/-- **Theorem (Dynamics-level ρ*-ordering of feature learning).**
-    Under (A1)-(A5), (H1)-(H4), and bootstrap, if `ρ_r* > ρ_s*` and
-    `λ_r* ≥ λ_s*`, then the actual JEPA training dynamics satisfy
-    `T̂_r < T̂_s` for all ε sufficiently small.
+/-- **Sub-lemma (Laurent-separation asymptotic).** With `ρ_s < ρ_r` and
+    `λ_s ≤ λ_r`, the Laurent sum for `s` exceeds the Laurent sum for `r`
+    by at least `(K_r + K_s) * ε^{-(L-2)/L}` once ε is small enough.
+
+    Mathematical content: write `LSr ε = (1/λ_r) Σ_n L/(n ρ_r^{2L-n-1} ε^{n/L})`
+    and similarly for `s`. The n=2L-2 summand contributes
+    `(L / ((2L-2) λ)) * (1/ρ_s - 1/ρ_r) * ε^{-(2L-2)/L}` to `LSs - LSr`
+    (the `1/λ_s ≥ 1/λ_r` factor only helps; all other summands are
+    nonnegative since `ρ_s^{2L-n-1} ≤ ρ_r^{2L-n-1}` for `n ≤ 2L-2`).
+    Comparing exponents `(2L-2)/L > (L-2)/L` for `L ≥ 2` (gap of `1`) yields
+    `ε^{-(2L-2)/L} = ε^{-1} · ε^{-(L-2)/L}`; choose `ε_0` so that the
+    coefficient `L (1/ρ_s - 1/ρ_r) / ((2L-2) λ_r ε)` strictly dominates `K_r + K_s`.
+
+    Left as a named `sorry` — pure ε-asymptotic algebra over finite sums. -/
+lemma laurent_separation_dominates
+    (dat : JEPAData d) (eb : GenEigenbasis dat)
+    (L : ℕ) (hL : 2 ≤ L) (r s : Fin d)
+    (hrho : (eb.pairs s).rho < (eb.pairs r).rho)
+    (hlam : projectedCovariance dat eb s ≤ projectedCovariance dat eb r)
+    (K_r K_s : ℝ) (hK_r : 0 < K_r) (hK_s : 0 < K_s) :
+    ∃ ε_0 : ℝ, 0 < ε_0 ∧ ε_0 < 1 ∧ ∀ ε : ℝ, 0 < ε → ε < ε_0 →
+      (1 / projectedCovariance dat eb s)
+        * ∑ n ∈ Finset.Ioc 0 (2 * L - 1),
+            (L : ℝ) / ((n : ℝ) * (eb.pairs s).rho ^ (2 * L - n - 1)
+                        * ε ^ ((n : ℝ) / L))
+      - (1 / projectedCovariance dat eb r)
+        * ∑ n ∈ Finset.Ioc 0 (2 * L - 1),
+            (L : ℝ) / ((n : ℝ) * (eb.pairs r).rho ^ (2 * L - n - 1)
+                        * ε ^ ((n : ℝ) / L))
+      > (K_r + K_s) * ε ^ (-((L : ℝ) - 2) / L) := by
+  sorry  -- ε-asymptotic algebra: n=2L-2 term gives Θ(ε^{-(2L-2)/L}) gap.
+
+/-- **Theorem 6.1 (Dynamics-level ρ*-ordering of feature learning).**
+    Under the diagonal-amplitude initial condition and the perturbed Bernoulli
+    ODE bound (output of `diagAmp_ODE`), if `ρ_r* > ρ_s*` and `λ_r* ≥ λ_s*`,
+    then for all sufficiently small ε the actual JEPA training dynamics satisfy
+    `T̂_r < T̂_s`.
 
     This subsumes `critical_time_ordering` (which gave only the formula-level
-    n=1 Laurent term ordering). -/
+    n=1 Laurent term ordering). The proof composes:
+    - `actual_critical_time` for both `r` and `s` (giving uniform K_r, K_s
+      independent of ε), and
+    - `laurent_separation_dominates` (the ε-asymptotic algebra). -/
 theorem JEPA_dynamics_ordering (dat : JEPAData d) (eb : GenEigenbasis dat)
     (L : ℕ) (hL : 2 ≤ L)
     (t_max : ℝ) (ht_max : 0 < t_max)
-    (V Wbar : ℝ → ℝ → Matrix (Fin d) (Fin d) ℝ)
-      -- Wbar and V parameterised by (epsilon, t)
-    (hWbar_slow : ∀ epsilon : ℝ, 0 < epsilon → epsilon < 1 →
-      ∃ K : ℝ, 0 < K ∧ ∀ t ∈ Set.Icc 0 t_max,
-        matFrobNorm (deriv (Wbar epsilon) t) ≤ K * epsilon ^ 2)
-    (hV_flow_ode : ∀ epsilon : ℝ, 0 < epsilon → epsilon < 1 →
-      ∀ t ∈ Set.Icc 0 t_max,
-        HasDerivAt (V epsilon) (-(gradV dat (Wbar epsilon t) (V epsilon t))) t)
-    (htrack : ∀ epsilon : ℝ, 0 < epsilon → epsilon < 1 →
-      ∃ K : ℝ, 0 < K ∧ ∀ t ∈ Set.Icc 0 t_max,
-        matFrobNorm (V epsilon t - quasiStaticDecoder dat (Wbar epsilon t)) ≤
-          K * epsilon ^ (2 * ((L : ℝ) - 1) / L))
-    (hoff : ∀ epsilon : ℝ, 0 < epsilon → epsilon < 1 →
-      ∃ K : ℝ, 0 < K ∧ ∀ r s : Fin d, r ≠ s → ∀ t ∈ Set.Icc 0 t_max,
-        |offDiagAmplitude dat eb (Wbar epsilon t) r s|
-          ≤ K * epsilon ^ ((1 : ℝ) / L))
+    (Wbar : ℝ → ℝ → Matrix (Fin d) (Fin d) ℝ)
     (r s : Fin d)
     (hrho : (eb.pairs s).rho < (eb.pairs r).rho)
     (hlam : projectedCovariance dat eb s ≤ projectedCovariance dat eb r)
-    (p : ℝ) (hp : 0 < p) (hp_lt : p < 1) :
+    (p : ℝ) (hp : 0 < p) (hp_lt : p < 1)
+    -- Diagonal amplitude initial conditions (output of balanced-init projection)
+    (hinit_r : ∀ epsilon : ℝ, 0 < epsilon → epsilon < 1 →
+      diagAmplitude dat eb (Wbar epsilon 0) r = epsilon)
+    (hinit_s : ∀ epsilon : ℝ, 0 < epsilon → epsilon < 1 →
+      diagAmplitude dat eb (Wbar epsilon 0) s = epsilon)
+    -- Diagonal amplitude perturbed Bernoulli ODE bounds (output of `diagAmp_ODE`)
+    (hode_r : ∃ C_r : ℝ, 0 < C_r ∧ ∀ epsilon : ℝ, 0 < epsilon → epsilon < 1 →
+      ∀ t ∈ Set.Ioo 0 t_max,
+        |deriv (fun u => diagAmplitude dat eb (Wbar epsilon u) r) t
+         - ((L : ℝ) * projectedCovariance dat eb r
+              * Real.rpow (diagAmplitude dat eb (Wbar epsilon t) r) (3 - 1 / L)
+              * (1 - Real.rpow (diagAmplitude dat eb (Wbar epsilon t) r) (1 / L)
+                     / (eb.pairs r).rho))|
+        ≤ C_r * epsilon ^ ((2 * (L : ℝ) - 1) / L))
+    (hode_s : ∃ C_s : ℝ, 0 < C_s ∧ ∀ epsilon : ℝ, 0 < epsilon → epsilon < 1 →
+      ∀ t ∈ Set.Ioo 0 t_max,
+        |deriv (fun u => diagAmplitude dat eb (Wbar epsilon u) s) t
+         - ((L : ℝ) * projectedCovariance dat eb s
+              * Real.rpow (diagAmplitude dat eb (Wbar epsilon t) s) (3 - 1 / L)
+              * (1 - Real.rpow (diagAmplitude dat eb (Wbar epsilon t) s) (1 / L)
+                     / (eb.pairs s).rho))|
+        ≤ C_s * epsilon ^ ((2 * (L : ℝ) - 1) / L)) :
     ∃ epsilon_0 : ℝ, 0 < epsilon_0 ∧ epsilon_0 < 1 ∧
       ∀ epsilon : ℝ, 0 < epsilon → epsilon < epsilon_0 →
         hittingTime (fun t => diagAmplitude dat eb (Wbar epsilon t) r)
                      (p * (eb.pairs r).rho ^ L) t_max
         < hittingTime (fun t => diagAmplitude dat eb (Wbar epsilon t) s)
                      (p * (eb.pairs s).rho ^ L) t_max := by
-  -- Proof skeleton (see roadmap):
-  -- 1. Apply diagAmp_ODE for both r and s to get Bernoulli ODEs with
-  --    error ε^{(2L-1)/L}.
-  -- 2. Apply jepa_critical_time_diag to extract t*_r and t*_s as the
-  --    Laurent expansions in ε^{1/L}.
-  -- 3. Apply actual_critical_time twice to bound |T̂ - t*| = O(ε^{-(L-2)/L})
-  --    for both r and s.
-  -- 4. Compute t*_s - t*_r: leading λ-only terms cancel when λ_r = λ_s
-  --    (for the equal-λ case), or differ by a positive amount when λ_r > λ_s.
-  --    The first ρ-distinguishing term is the n=1 summand
-  --    L (ρ_r^{-(2L-2)} - ρ_s^{-(2L-2)})/(λ ε^{1/L}) > 0.
-  -- 5. The total separation is Θ(ε^{-1/L}); the perturbation error is
-  --    o(ε^{-1/L}), so for ε small enough, T̂_r < T̂_s.
-  sorry
+  -- Step 1: extract uniform constants K_r, K_s from `actual_critical_time`.
+  obtain ⟨C_r, hC_r_pos, hode_r_bd⟩ := hode_r
+  obtain ⟨C_s, hC_s_pos, hode_s_bd⟩ := hode_s
+  obtain ⟨K_r, hK_r_pos, hK_r⟩ :=
+    actual_critical_time dat eb L hL t_max ht_max p hp hp_lt r C_r hC_r_pos
+  obtain ⟨K_s, hK_s_pos, hK_s⟩ :=
+    actual_critical_time dat eb L hL t_max ht_max p hp hp_lt s C_s hC_s_pos
+  -- Step 2: Laurent separation gap (named sorry).
+  obtain ⟨ε_0, hε_0_pos, hε_0_lt, h_sep⟩ :=
+    laurent_separation_dominates dat eb L hL r s hrho hlam K_r K_s hK_r_pos hK_s_pos
+  refine ⟨ε_0, hε_0_pos, hε_0_lt, ?_⟩
+  intro ε hε_pos hε_lt
+  have hε_small : ε < 1 := lt_trans hε_lt hε_0_lt
+  -- Step 3: instantiate `actual_critical_time` for r and s at this ε.
+  have h_r := hK_r ε hε_pos hε_small (Wbar ε)
+    (hinit_r ε hε_pos hε_small) (hode_r_bd ε hε_pos hε_small)
+  have h_s := hK_s ε hε_pos hε_small (Wbar ε)
+    (hinit_s ε hε_pos hε_small) (hode_s_bd ε hε_pos hε_small)
+  -- Step 4: combine perturbation bounds with Laurent separation via triangle.
+  have h_sep_ε := h_sep ε hε_pos hε_lt
+  have hr_le := (abs_le.mp h_r).2
+  have hs_ge := (abs_le.mp h_s).1
+  linarith
