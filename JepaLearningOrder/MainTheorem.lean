@@ -4,6 +4,7 @@ import JepaLearningOrder.OffDiagHelpers
 import JepaLearningOrder.JEPA
 import JepaLearningOrder.PDLowerHelpers
 import JepaLearningOrder.BootstrapLemmas
+import JepaLearningOrder.LaurentHelpers
 
 /-!
 # Main Theorem: JEPA ρ*-Ordering (Updated)
@@ -156,7 +157,8 @@ theorem JEPA_rho_ordering' (dat : JEPAData d) (eb : GenEigenbasis dat)
     Status: stub with `sorry` — to be discharged after Jobs E, F, G land.
 -/
 
-/-- **Sub-lemma (Laurent-separation asymptotic).** With `ρ_s < ρ_r` and
+/-
+**Sub-lemma (Laurent-separation asymptotic).** With `ρ_s < ρ_r` and
     `λ_s ≤ λ_r`, the Laurent sum for `s` exceeds the Laurent sum for `r`
     by at least `(K_r + K_s) * ε^{-(L-2)/L}` once ε is small enough.
 
@@ -169,7 +171,8 @@ theorem JEPA_rho_ordering' (dat : JEPAData d) (eb : GenEigenbasis dat)
     `ε^{-(2L-2)/L} = ε^{-1} · ε^{-(L-2)/L}`; choose `ε_0` so that the
     coefficient `L (1/ρ_s - 1/ρ_r) / ((2L-2) λ_r ε)` strictly dominates `K_r + K_s`.
 
-    Left as a named `sorry` — pure ε-asymptotic algebra over finite sums. -/
+    Left as a named `sorry` — pure ε-asymptotic algebra over finite sums.
+-/
 lemma laurent_separation_dominates
     (dat : JEPAData d) (eb : GenEigenbasis dat)
     (L : ℕ) (hL : 2 ≤ L) (r s : Fin d)
@@ -186,7 +189,37 @@ lemma laurent_separation_dominates
             (L : ℝ) / ((n : ℝ) * (eb.pairs r).rho ^ (2 * L - n - 1)
                         * ε ^ ((n : ℝ) / L))
       > (K_r + K_s) * ε ^ (-((L : ℝ) - 2) / L) := by
-  sorry  -- ε-asymptotic algebra: n=2L-2 term gives Θ(ε^{-(2L-2)/L}) gap.
+  -- Set M = (L : ℝ) / ((2 * L - 2 : ℝ)) * (1 / (projectedCovariance dat eb s * (eb.pairs s).rho) - 1 / (projectedCovariance dat eb r * (eb.pairs r).rho)).
+  set M := (L : ℝ) / ((2 * L - 2 : ℝ)) * (1 / (projectedCovariance dat eb s * (eb.pairs s).rho) - 1 / (projectedCovariance dat eb r * (eb.pairs r).rho)) with hM_def;
+  -- Choose ε_0 such that for all ε with 0 < ε < ε_0, we have M / ε > K_r + K_s.
+  obtain ⟨ε_0, hε_0_pos, hε_0⟩ : ∃ ε_0, 0 < ε_0 ∧ ε_0 < 1 ∧ ∀ ε, 0 < ε → ε < ε_0 → M / ε > K_r + K_s := by
+    have hM_pos : 0 < M := by
+      refine' mul_pos ( div_pos ( by positivity ) ( by linarith [ show ( L : ℝ ) ≥ 2 by norm_cast ] ) ) ( sub_pos_of_lt _ );
+      have h_prod_lt : projectedCovariance dat eb s * (eb.pairs s).rho < projectedCovariance dat eb r * (eb.pairs r).rho := by
+        apply_rules [ projCov_mul_rho_strict_lt ];
+      exact one_div_lt_one_div_of_lt ( mul_pos ( projectedCovariance_pos dat eb s ) ( eb.pairs s |>.hrho_pos ) ) h_prod_lt;
+    exact ⟨ Min.min 1 ( M / ( K_r + K_s ) ) / 2, by positivity, by linarith [ show 0 < Min.min 1 ( M / ( K_r + K_s ) ) by positivity, min_le_left 1 ( M / ( K_r + K_s ) ), min_le_right 1 ( M / ( K_r + K_s ) ) ], fun ε hε₁ hε₂ => by rw [ gt_iff_lt ] ; rw [ lt_div_iff₀ hε₁ ] ; nlinarith [ show 0 < Min.min 1 ( M / ( K_r + K_s ) ) by positivity, min_le_left 1 ( M / ( K_r + K_s ) ), min_le_right 1 ( M / ( K_r + K_s ) ), mul_div_cancel₀ M ( show ( K_r + K_s ) ≠ 0 by positivity ) ] ⟩;
+  refine' ⟨ ε_0, hε_0_pos, hε_0.1, fun ε hε₁ hε₂ => lt_of_lt_of_le ( mul_lt_mul_of_pos_right ( hε_0.2 ε hε₁ hε₂ ) ( Real.rpow_pos_of_pos hε₁ _ ) ) _ ⟩;
+  have h_sum_ge : ∑ n ∈ Finset.Ioc 0 (2 * L - 1), (1 / projectedCovariance dat eb s * ((L : ℝ) / ((n : ℝ) * (eb.pairs s).rho ^ (2 * L - n - 1) * ε ^ ((n : ℝ) / L))) - 1 / projectedCovariance dat eb r * ((L : ℝ) / ((n : ℝ) * (eb.pairs r).rho ^ (2 * L - n - 1) * ε ^ ((n : ℝ) / L)))) ≥ M / ε ^ ((2 * L - 2 : ℝ) / L) := by
+    refine' le_trans _ ( Finset.single_le_sum ( fun n hn => _ ) ( show 2 * L - 2 ∈ Finset.Ioc 0 ( 2 * L - 1 ) from _ ) );
+    · rcases L with ( _ | _ | L ) <;> norm_num at *;
+      norm_num [ Nat.mul_succ, pow_succ' ] ; ring_nf;
+      field_simp [hM_def]
+      ring_nf;
+      rw [ hM_def ] ; ring_nf;
+      nlinarith [ inv_mul_cancel_left₀ ( by linarith : ( 2 + L * 2 : ℝ ) ≠ 0 ) ( ( eb.pairs s |> GenEigenpair.rho ) ⁻¹ * ( projectedCovariance dat eb s ) ⁻¹ ), inv_mul_cancel_left₀ ( by linarith : ( 2 + L * 2 : ℝ ) ≠ 0 ) ( ( eb.pairs r |> GenEigenpair.rho ) ⁻¹ * ( projectedCovariance dat eb r ) ⁻¹ ) ];
+    · refine' sub_nonneg_of_le _;
+      gcongr;
+      · exact div_nonneg ( Nat.cast_nonneg _ ) ( mul_nonneg ( mul_nonneg ( Nat.cast_nonneg _ ) ( pow_nonneg ( le_of_lt ( eb.pairs r |>.hrho_pos ) ) _ ) ) ( Real.rpow_nonneg hε₁.le _ ) );
+      · exact one_div_nonneg.mpr ( le_of_lt ( projectedCovariance_pos dat eb s ) );
+      · exact projectedCovariance_pos dat eb s;
+      · exact mul_pos ( mul_pos ( Nat.cast_pos.mpr ( Finset.mem_Ioc.mp hn |>.1 ) ) ( pow_pos ( eb.pairs s |>.hrho_pos ) _ ) ) ( Real.rpow_pos_of_pos hε₁ _ );
+      · exact le_of_lt ( eb.pairs s |>.hrho_pos );
+    · exact Finset.mem_Ioc.mpr ⟨ Nat.sub_pos_of_lt ( by linarith ), Nat.sub_le_sub_left ( by linarith ) _ ⟩;
+  convert h_sum_ge.le using 1;
+  · rw [ div_mul_eq_mul_div, div_eq_div_iff ] <;> first | positivity | ring;
+    rw [ mul_assoc, ← Real.rpow_add hε₁ ] ; ring_nf ; norm_num [ show L ≠ 0 by linarith ];
+  · rw [ Finset.mul_sum _ _ _, Finset.mul_sum _ _ _, Finset.sum_sub_distrib ]
 
 /-- **Theorem 6.1 (Dynamics-level ρ*-ordering of feature learning).**
     Under the diagonal-amplitude initial condition and the perturbed Bernoulli
