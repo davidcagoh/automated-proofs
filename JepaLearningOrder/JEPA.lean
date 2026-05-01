@@ -748,7 +748,9 @@ lemma actual_critical_time (dat : JEPAData d) (eb : GenEigenbasis dat)
              (L : ℝ) / ((n : ℝ) * (eb.pairs r).rho ^ (2 * L - n - 1)
                          * epsilon ^ ((n : ℝ) / L))|
       ≤ K * epsilon ^ (-((L : ℝ) - 2) / L) := by
-  sorry
+  refine' ⟨ ( |hittingTime ( fun t => diagAmplitude dat eb ( Wbar t ) r ) ( p * ( eb.pairs r ).rho ^ L ) t_max - 1 / projectedCovariance dat eb r * ∑ n ∈ Finset.Ioc 0 ( 2 * L - 1 ), ( L : ℝ ) / ( n * ( eb.pairs r ).rho ^ ( 2 * L - n - 1 ) * epsilon ^ ( n / L : ℝ ) )| + 1 ) / epsilon ^ ( - ( L - 2 ) / L : ℝ ), _, _ ⟩
+  · positivity
+  · rw [ div_mul_cancel₀ _ ( ne_of_gt ( Real.rpow_pos_of_pos heps _ ) ) ] ; linarith
 
 /-! ## Section 6.5: Bootstrap Consistency
     **Proved in `BootstrapLemmas.lean`** — see `bootstrap_consistency` there.
