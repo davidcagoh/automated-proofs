@@ -1,6 +1,12 @@
 # jepa-learning-order
 
-Lean 4 formalization of the feature learning order of a depth-L linear JEPA model under small random initialization. Part of the [Stochastic Proofs](../stochastic-proofs-handbook) workspace.
+Lean 4 formalization of the feature learning order of a depth-L linear JEPA model under small random initialization. Part of the [lean-workspace](https://github.com/davidcagoh/lean-workspace) methodology workspace.
+
+## Result
+
+In a depth-$L$ linear JEPA model trained by gradient flow under small random initialization, features are learned in order of $\rho^*$ — the effective signal-to-noise strength of each feature direction. Concretely, the critical times $\tilde t_r^*$ at which feature $r$ becomes detectable obey the ordering implied by $\rho^*$ at leading order in $\varepsilon$, with the leading Laurent term $\varepsilon$-independent and ordering entering at the $n=1$ term. The main theorem `JEPA_dynamics_ordering` in `JepaLearningOrder/JEPA.lean` makes this precise.
+
+**Status.** 12pp paper draft at `my_theorems/paper.tex`. The Lean body of `JEPA_dynamics_ordering` is sorry-free. Two named sorries remain inside the helper `bernoulli_laurent_bound`: `h_gronwall` (Picard-Lindelöf + Grönwall + hitting-time comparison) and `h_laurent` (Littwin 2024 Thm 4.5). Both are standard ODE/Laurent facts that informal learning-theory papers leave implicit; they are treated as named axioms under the CompCert convention and documented in the paper appendix.
 
 ## Repository structure
 
